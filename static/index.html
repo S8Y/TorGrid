@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TorGrid — SOCKS5 Proxy Pool</title>
+<style>
+/* ─── Reset & Base ─────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg-deep: #0a0a0f;
+  --bg-surface: #12121a;
+  --bg-card: rgba(18, 18, 30, 0.75);
+  --bg-glass: rgba(255, 255, 255, 0.03);
+  --border-glass: rgba(255, 255, 255, 0.06);
+  --border-hover: rgba(255, 255, 255, 0.12);
+  --text-primary: #e8e8f0;
+  --text-secondary: #8888a0;
+  --text-muted: #555570;
+  --accent-cyan: #00e5ff;
+  --accent-purple: #7c4dff;
+  --accent-rose: #ff4081;
+  --accent-green: #00e676;
+  --accent-orange: #ff9100;
+  --accent-red: #ff1744;
+  --glow-cyan: rgba(0, 229, 255, 0.15);
+  --glow-purple: rgba(124, 77, 255, 0.15);
+  --glow-green: rgba(0, 230, 118, 0.12);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-lg: 16px;
+  --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro', system-ui, sans-serif;
+}
+html { font-size: 14px; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.5;
+}
+.bg-grid {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+.bg-glow {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
+}
+.bg-glow::before {
+  content: ''; position: absolute;
+  width: 600px; height: 600px; top: -200px; right: -200px;
+  background: radial-gradient(circle, var(--glow-cyan) 0%, transparent 70%);
+  animation: glow-drift 20s ease-in-out infinite alternate;
+}
+.bg-glow::after {
+  content: ''; position: absolute;
+  width: 500px; height: 500px; bottom: -150px; left: -150px;
+  background: radial-gradient(circle, var(--glow-purple) 0%, transparent 70%);
+  animation: glow-drift 25s ease-in-out infinite alternate-reverse;
+}
+@keyframes glow-drift {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(80px, -60px) scale(1.3); }
+}
+
+/* ─── Layout ────────────────────────────────────────────── */
+.app { position: relative; z-index: 1; max-width: 1440px; margin: 0 auto; padding: 20px 24px 60px; }
+
+/* ─── Header ────────────────────────────────────────────── */
+.header {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+  padding: 14px 22px; margin-bottom: 20px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+}
+.header-left { display: flex; align-items: center; gap: 14px; }
+.logo {
+  font-family: var(--font-mono); font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em;
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.logo-sub { font-size: 0.65rem; font-weight: 400; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); margin-top: -2px; }
+.header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.status-indicator { font-size: 0.78rem; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+.status-indicator .dot {
+  display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+  transition: all 0.3s;
+}
+.status-indicator .dot.online { background: var(--accent-green); box-shadow: 0 0 8px var(--accent-green); animation: pulse-dot 2s ease-in-out infinite; }
+.status-indicator .dot.offline { background: var(--accent-red); box-shadow: 0 0 8px var(--accent-red); }
+.status-indicator .dot.connecting { background: var(--accent-orange); box-shadow: 0 0 8px var(--accent-orange); animation: pulse-dot 1s ease-in-out infinite; }
+@keyframes pulse-dot {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* ─── Buttons ───────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 7px 14px; border: 1px solid var(--border-glass);
+  border-radius: var(--radius-sm); background: var(--bg-glass);
+  color: var(--text-primary); font-size: 0.76rem; font-family: var(--font-sans);
+  cursor: pointer; transition: all 0.2s ease;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  user-select: none; white-space: nowrap;
+}
+.btn:hover { border-color: var(--border-hover); background: rgba(255,255,255,0.06); transform: translateY(-1px); }
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none !important; }
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+  border-color: transparent; color: #000; font-weight: 600;
+}
+.btn-primary:hover { filter: brightness(1.15); border-color: transparent; }
+.btn-sm { font-size: 0.68rem; padding: 4px 10px; }
+.btn-danger { border-color: rgba(255,23,68,0.2); color: var(--accent-red); }
+.btn-danger:hover { border-color: rgba(255,23,68,0.4); background: rgba(255,23,68,0.08); }
+
+/* ─── Stats Bar ─────────────────────────────────────────── */
+.stats-bar {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px; margin-bottom: 18px;
+}
+.stat-card {
+  padding: 14px 18px;
+  background: var(--bg-glass); border: 1px solid var(--border-glass);
+  border-radius: var(--radius); position: relative; overflow: hidden;
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  transition: border-color 0.3s;
+}
+.stat-card:hover { border-color: var(--border-hover); }
+.stat-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+  opacity: 0.3;
+}
+.stat-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 3px; }
+.stat-value { font-family: var(--font-mono); font-size: 1.25rem; font-weight: 700; line-height: 1.2; }
+.stat-value.cyan { color: var(--accent-cyan); }
+.stat-value.purple { color: var(--accent-purple); }
+.stat-value.green { color: var(--accent-green); }
+.stat-value.rose { color: var(--accent-rose); }
+.stat-value.orange { color: var(--accent-orange); }
+.stat-sub { font-size: 0.66rem; color: var(--text-secondary); margin-top: 1px; }
+.stat-value.small { font-size: 0.9rem; }
+
+/* ─── Proxy Bar ─────────────────────────────────────────── */
+.proxy-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 18px; margin-bottom: 16px;
+  background: var(--bg-glass); border: 1px solid var(--border-glass);
+  border-radius: var(--radius); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  flex-wrap: wrap;
+}
+.proxy-bar-label { font-size: 0.7rem; color: var(--text-muted); white-space: nowrap; }
+.proxy-bar-list { display: flex; gap: 5px; flex-wrap: wrap; flex: 1; min-width: 0; }
+.proxy-tag {
+  font-family: var(--font-mono); font-size: 0.62rem;
+  padding: 2px 7px; border-radius: 4px;
+  background: rgba(0, 229, 255, 0.06);
+  border: 1px solid rgba(0, 229, 255, 0.1);
+  color: var(--accent-cyan); white-space: nowrap;
+  cursor: pointer; transition: all 0.15s;
+}
+.proxy-tag:hover { background: rgba(0, 229, 255, 0.12); }
+.proxy-tag.dead { background: rgba(255, 23, 68, 0.06); border-color: rgba(255, 23, 68, 0.1); color: var(--accent-red); }
+.copy-toast {
+  position: absolute; background: #1a1a2e; color: var(--accent-green);
+  padding: 4px 10px; border-radius: 4px; font-size: 0.65rem;
+  border: 1px solid rgba(0, 230, 118, 0.2);
+  pointer-events: none; animation: copy-pop 1s ease forwards;
+}
+@keyframes copy-pop {
+  0% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-20px); }
+}
+
+/* ─── Controls ──────────────────────────────────────────── */
+.controls {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;
+}
+.search-box {
+  flex: 1; min-width: 180px;
+  padding: 7px 12px; border: 1px solid var(--border-glass);
+  border-radius: var(--radius-sm); background: var(--bg-glass);
+  color: var(--text-primary); font-size: 0.78rem; font-family: var(--font-mono);
+  outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+}
+.search-box::placeholder { color: var(--text-muted); }
+.search-box:focus { border-color: var(--accent-cyan); box-shadow: 0 0 16px var(--glow-cyan); }
+.filter-count { font-size: 0.72rem; color: var(--text-muted); }
+
+/* ─── Grid ──────────────────────────────────────────────── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 10px;
+}
+
+/* ─── Card ──────────────────────────────────────────────── */
+.card {
+  padding: 14px 16px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  transition: all 0.3s ease;
+  position: relative; overflow: visible;
+  animation: card-in 0.35s ease backwards;
+}
+.card:hover { border-color: var(--border-hover); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+.card.dead { opacity: 0.5; }
+.card.dead:hover { opacity: 0.7; }
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.card-top {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
+}
+.card-id {
+  font-family: var(--font-mono); font-size: 0.65rem; font-weight: 600;
+  padding: 2px 8px; border-radius: 4px;
+  background: rgba(0, 229, 255, 0.08);
+  border: 1px solid rgba(0, 229, 255, 0.1);
+  color: var(--accent-cyan);
+}
+.card-id.dead { background: rgba(255, 23, 68, 0.08); border-color: rgba(255, 23, 68, 0.12); color: var(--accent-red); }
+.card-id.reviving { background: rgba(255, 145, 0, 0.08); border-color: rgba(255, 145, 0, 0.12); color: var(--accent-orange); }
+.card-status { display: flex; align-items: center; gap: 5px; font-size: 0.68rem; color: var(--text-secondary); }
+.card-status .dot { width: 6px; height: 6px; border-radius: 50%; }
+.card-status .dot.alive { background: var(--accent-green); box-shadow: 0 0 6px var(--accent-green); }
+.card-status .dot.dead { background: var(--accent-red); box-shadow: 0 0 6px var(--accent-red); }
+.card-status .dot.reviving { background: var(--accent-orange); box-shadow: 0 0 6px var(--accent-orange); animation: pulse-dot 1s ease-in-out infinite; }
+
+.card-proxy {
+  font-family: var(--font-mono); font-size: 0.7rem;
+  padding: 5px 8px; margin-bottom: 8px;
+  background: rgba(0,0,0,0.3); border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.04);
+  color: var(--accent-cyan); word-break: break-all;
+  display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  position: relative;
+}
+.card-proxy .proxy-copy {
+  font-size: 0.6rem; cursor: pointer; padding: 1px 5px; border-radius: 3px;
+  border: none; background: rgba(255,255,255,0.06); color: var(--text-secondary);
+  transition: all 0.15s; flex-shrink: 0;
+}
+.card-proxy .proxy-copy:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+
+.card-stats {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 4px 14px; font-size: 0.7rem;
+  margin-bottom: 6px;
+}
+.card-stat-row { display: flex; justify-content: space-between; align-items: center; }
+.card-stat-label { color: var(--text-muted); }
+.card-stat-value { font-family: var(--font-mono); color: var(--text-secondary); }
+.card-stat-value.cyan { color: var(--accent-cyan); }
+.card-stat-value.purple { color: var(--accent-purple); }
+.card-stat-value.rose { color: var(--accent-rose); }
+
+.card-error {
+  font-size: 0.62rem; color: var(--accent-red);
+  background: rgba(255, 23, 68, 0.06);
+  border: 1px solid rgba(255, 23, 68, 0.08);
+  padding: 4px 8px; border-radius: 4px; margin-bottom: 6px;
+  word-break: break-all;
+}
+
+.card-actions {
+  display: flex; gap: 5px; margin-top: 6px;
+  padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.04);
+}
+
+/* ─── Empty / Loading ───────────────────────────────────── */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 60px 20px; color: var(--text-muted); text-align: center; gap: 12px;
+}
+.empty-state .icon { font-size: 2.5rem; opacity: 0.5; }
+.empty-state .msg { font-size: 0.9rem; }
+.empty-state .sub { font-size: 0.75rem; color: var(--text-muted); }
+.spinner { width: 22px; height: 22px; border: 2px solid var(--border-glass); border-top-color: var(--accent-cyan); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── Scan Line Overlay ─────────────────────────────────── */
+.scan-line {
+  position: absolute; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0,229,255,0.06), transparent);
+  pointer-events: none; animation: scan 6s linear infinite; z-index: 0;
+}
+@keyframes scan {
+  0% { top: -1px; }
+  100% { top: 100%; }
+}
+
+/* ─── Toast ─────────────────────────────────────────────── */
+.toast-container {
+  position: fixed; bottom: 20px; right: 20px; z-index: 100;
+  display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+}
+.toast {
+  padding: 9px 16px; border-radius: var(--radius-sm);
+  font-size: 0.78rem; animation: toast-in 0.3s ease;
+  pointer-events: auto;
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-glass);
+}
+.toast.success { background: rgba(0, 230, 118, 0.1); color: var(--accent-green); border-color: rgba(0, 230, 118, 0.15); }
+.toast.error { background: rgba(255, 23, 68, 0.1); color: var(--accent-red); border-color: rgba(255, 23, 68, 0.15); }
+.toast.info { background: rgba(0, 229, 255, 0.07); color: var(--accent-cyan); border-color: rgba(0, 229, 255, 0.1); }
+@keyframes toast-in { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
+
+/* ─── Responsive ────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .app { padding: 12px; }
+  .header { flex-direction: column; align-items: stretch; }
+  .header-right { justify-content: stretch; }
+  .header-right .btn { flex: 1; justify-content: center; }
+  .stats-bar { grid-template-columns: repeat(2, 1fr); }
+  .grid { grid-template-columns: 1fr; }
+  .stat-value { font-size: 1rem; }
+  .controls { flex-direction: column; }
+  .search-box { min-width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+
+<div class="app" id="app">
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div>
+        <div class="logo">TorGrid</div>
+        <div class="logo-sub">SOCKS5 Proxy Pool</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="status-indicator">
+        <span class="dot connecting" id="statusDot"></span>
+        <span id="statusText">Connecting</span>
+      </span>
+      <button class="btn btn-primary" onclick="copyAllProxies()" title="Copy all SOCKS5 proxy URLs">📋 Copy All Proxies</button>
+      <button class="btn" onclick="rotateAll()" title="Request new Tor circuits for all instances">🔄 Rotate All</button>
+    </div>
+  </header>
+
+  <!-- Stats Bar -->
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-card">
+      <div class="stat-label">Alive / Total</div>
+      <div class="stat-value cyan" id="statAlive">—<span class="stat-sub" style="font-size:0.65rem;color:var(--text-muted);font-weight:400;margin-left:4px" id="statDead"></span></div>
+      <div class="stat-sub" id="statDeadDetail"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Bandwidth (In / Out)</div>
+      <div class="stat-value green small" id="statBwIn">0 B/s <span class="stat-sub" style="color:var(--accent-rose)" id="statBwOut">0 B/s</span></div>
+      <div class="stat-sub" id="statTransfer">0 GB transferred</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Circuits</div>
+      <div class="stat-value purple" id="statCircuits">0</div>
+      <div class="stat-sub">across all instances</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Uptime (max)</div>
+      <div class="stat-value orange" id="statUptime">0s</div>
+      <div class="stat-sub" id="statUpSince">—</div>
+    </div>
+  </div>
+
+  <!-- Proxy List Bar -->
+  <div class="proxy-bar">
+    <span class="proxy-bar-label">SOCKS5 Proxies</span>
+    <div class="proxy-bar-list" id="proxyList"></div>
+    <button class="btn btn-sm" onclick="copyAllProxies()">📋 Copy</button>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <input class="search-box" id="searchBox" type="text" placeholder="Filter by port, IP, country, status…" oninput="filterCards()" spellcheck="false">
+    <span class="filter-count" id="filterCount">0 / 0</span>
+  </div>
+
+  <!-- Grid / Empty -->
+  <div id="gridContainer"></div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ─── State ────────────────────────────────────────────────
+let state = null;
+let ws = null;
+let reconnectDelay = 1;
+let reconnectTimer = null;
+
+// ─── WebSocket ────────────────────────────────────────────
+function connectWS() {
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(`${proto}//${location.host}/ws`);
+
+  ws.onopen = () => {
+    setStatus('online', 'Connected');
+    reconnectDelay = 1;
+    if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+  };
+
+  ws.onmessage = (e) => {
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.type === 'state') {
+        state = msg;
+        render(msg);
+      }
+    } catch(err) { /* ignore parse errors */ }
+  };
+
+  ws.onclose = () => {
+    if (state) render(state); // keep last known state visible
+    setStatus('offline', 'Disconnected');
+    scheduleReconnect();
+  };
+
+  ws.onerror = () => { ws.close(); };
+}
+
+function scheduleReconnect() {
+  if (reconnectTimer) return;
+  const delay = Math.min(reconnectDelay, 30);
+  setStatus('connecting', `Reconnecting in ${delay}s…`);
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null;
+    reconnectDelay = Math.min(reconnectDelay * 2, 30);
+    connectWS();
+  }, delay * 1000);
+}
+
+function setStatus(type, text) {
+  const dot = document.getElementById('statusDot');
+  const label = document.getElementById('statusText');
+  dot.className = 'dot ' + type;
+  label.textContent = text;
+}
+
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ─── Formatting ──────────────────────────────────────────
+function fmtBW(b) {
+  if (!b || b < 1) return '0 B/s';
+  if (b < 1024) return b + ' B/s';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB/s';
+  return (b/1048576).toFixed(2) + ' MB/s';
+}
+function fmtBytes(b) {
+  if (!b || b < 0) return '0 B';
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  if (b < 1073741824) return (b/1048576).toFixed(1) + ' MB';
+  return (b/1073741824).toFixed(2) + ' GB';
+}
+function fmtUptime(s) {
+  if (!s || s < 0) return '0s';
+  if (s < 60) return Math.round(s) + 's';
+  if (s < 3600) return Math.floor(s/60) + 'm ' + Math.round(s%60) + 's';
+  if (s < 86400) return Math.floor(s/3600) + 'h ' + Math.floor((s%3600)/60) + 'm';
+  return Math.floor(s/86400) + 'd ' + Math.floor((s%86400)/3600) + 'h';
+}
+function fmtCountry(c) { return c ? c.toUpperCase() : '—'; }
+
+// ─── Render ──────────────────────────────────────────────
+function render(msg) {
+  const insts = msg.instances || [];
+  const agg = msg.aggregate || {};
+  const filter = (document.getElementById('searchBox').value || '').toLowerCase();
+
+  // Stats
+  document.getElementById('statAlive').innerHTML = `${agg.alive || 0} / ${agg.total || 0}<span style="font-size:0.65rem;color:var(--text-muted);font-weight:400;margin-left:4px">${agg.dead ? `(${agg.dead} dead)` : ''}</span>`;
+  document.getElementById('statDeadDetail').textContent = agg.dead ? `${agg.dead} instance${agg.dead !== 1 ? 's' : ''} offline` : 'All online';
+  document.getElementById('statBwIn').innerHTML = `${fmtBW(agg.total_bandwidth_in)} <span class="stat-sub" style="color:var(--accent-rose)">${fmtBW(agg.total_bandwidth_out)}</span>`;
+  document.getElementById('statBwOut').textContent = fmtBW(agg.total_bandwidth_out);
+  document.getElementById('statTransfer').textContent = `${fmtBytes(agg.total_read + agg.total_written)} transferred`;
+  document.getElementById('statCircuits').textContent = agg.total_circuits || 0;
+  document.getElementById('statUptime').textContent = fmtUptime(agg.uptime);
+
+  // Proxy list bar
+  const proxyListEl = document.getElementById('proxyList');
+  proxyListEl.innerHTML = (agg.proxy_list || []).map((p, i) => {
+    const alive = insts[i] && insts[i].alive;
+    return `<span class="proxy-tag ${alive ? '' : 'dead'}" onclick="copyProxy('${p}', this)" title="Click to copy">${esc(p)}</span>`;
+  }).join('');
+
+  // Filter + render cards
+  let filtered = insts.filter(i => {
+    if (!filter) return true;
+    const ip = (i.exit_ip || '').toLowerCase();
+    const proxy = (i.proxy || '').toLowerCase();
+    const status = i.alive ? 'alive' : 'dead';
+    const err = (i.error || '').toLowerCase();
+    const country = (i.exit_country || '').toLowerCase();
+    return proxy.includes(filter) || ip.includes(filter) || status.includes(filter) || err.includes(filter) || country.includes(filter);
+  });
+  document.getElementById('filterCount').textContent = `${filtered.length} / ${insts.length}`;
+
+  const container = document.getElementById('gridContainer');
+
+  if (insts.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="spinner"></div><div class="msg">Booting Tor instances…</div><div class="sub">First connections take 30-60s</div></div>`;
+    return;
+  }
+
+  container.innerHTML = `<div class="grid">${filtered.map((inst, idx) => renderCard(inst, idx)).join('')}</div>`;
+}
+
+function renderCard(inst, idx) {
+  const alive = inst.alive;
+  const cls = alive ? '' : 'dead';
+  const style = `animation-delay: ${(idx % 20) * 0.025}s`;
+  const statusCls = alive ? 'alive' : 'dead';
+
+  return `
+  <div class="card ${cls}" style="${style}">
+    <div class="scan-line"></div>
+    <div class="card-top">
+      <span class="card-id ${cls}">T${String(inst.id).padStart(2, '0')}</span>
+      <span class="card-status">
+        <span class="dot ${statusCls}"></span>
+        ${alive ? 'Alive' : (inst.error ? 'Error' : 'Dead')}
+      </span>
+    </div>
+    <div class="card-proxy">
+      <span>${esc(inst.proxy)}</span>
+      <button class="proxy-copy" onclick="copyProxy('${esc(inst.proxy)}', this)" title="Copy proxy URL">📋</button>
+    </div>
+    <div class="card-stats">
+      <div class="card-stat-row"><span class="card-stat-label">Exit IP</span><span class="card-stat-value purple">${inst.exit_ip ? esc(inst.exit_ip) : '⏳'}</span></div>
+      <div class="card-stat-row"><span class="card-stat-label">Country</span><span class="card-stat-value">${fmtCountry(inst.exit_country)}</span></div>
+      <div class="card-stat-row"><span class="card-stat-label">BW In</span><span class="card-stat-value cyan">${fmtBW(inst.bandwidth_in)}</span></div>
+      <div class="card-stat-row"><span class="card-stat-label">BW Out</span><span class="card-stat-value rose">${fmtBW(inst.bandwidth_out)}</span></div>
+      <div class="card-stat-row"><span class="card-stat-label">Circuits</span><span class="card-stat-value">${inst.circuit_count || 0}</span></div>
+      <div class="card-stat-row"><span class="card-stat-label">Port</span><span class="card-stat-value">${inst.socks_port}</span></div>
+      <div class="card-stat-row"><span class="card-stat-label">Total Read</span><span class="card-stat-value">${fmtBytes(inst.total_read)}</span></div>
+      <div class="card-stat-row"><span class="card-stat-label">Total Written</span><span class="card-stat-value">${fmtBytes(inst.total_written)}</span></div>
+      <div class="card-stat-row" style="grid-column:span 2"><span class="card-stat-label">Uptime</span><span class="card-stat-value">${fmtUptime(inst.uptime)}</span></div>
+    </div>
+    ${inst.error ? `<div class="card-error">${esc(inst.error)}</div>` : ''}
+    <div class="card-actions">
+      <button class="btn btn-sm" onclick="rotateInstance(${inst.id})" ${!alive ? 'disabled' : ''}>🔄 Rotate</button>
+      <button class="btn btn-sm btn-danger" onclick="restartInstance(${inst.id})">🔁 Restart</button>
+    </div>
+  </div>`;
+}
+
+// ─── Filter ───────────────────────────────────────────────
+function filterCards() {
+  if (state) render(state);
+}
+
+// ─── API ──────────────────────────────────────────────────
+async function apiPost(path) {
+  try {
+    const r = await fetch(path, { method: 'POST' });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || `HTTP ${r.status}`);
+    return data;
+  } catch (e) {
+    toast('Request failed: ' + e.message, 'error');
+    return null;
+  }
+}
+
+async function rotateInstance(idx) {
+  const r = await apiPost(`/api/instances/${idx}/new-identity`);
+  if (r) toast(`T${String(idx).padStart(2,'0')} — new circuit requested`, 'info');
+}
+
+async function rotateAll() {
+  toast('Rotating all circuits…', 'info');
+  await apiPost('/api/new-identity-all');
+}
+
+async function restartInstance(idx) {
+  const r = await apiPost(`/api/instances/${idx}/restart`);
+  if (r) toast(`T${String(idx).padStart(2,'0')} — restarting`, 'info');
+  else toast(`Restart failed for T${String(idx).padStart(2,'0')}`, 'error');
+}
+
+// ─── Clipboard ────────────────────────────────────────────
+function copyProxy(text, el) {
+  navigator.clipboard.writeText(text).then(() => {
+    // Quick popup
+    const tip = document.createElement('div');
+    tip.className = 'copy-toast';
+    tip.textContent = 'Copied!';
+    const rect = el.getBoundingClientRect();
+    tip.style.left = rect.left + 'px';
+    tip.style.top = (rect.top - 24) + 'px';
+    document.body.appendChild(tip);
+    setTimeout(() => tip.remove(), 1000);
+    toast('Proxy copied', 'success');
+  });
+}
+
+function copyAllProxies() {
+  if (!state || !state.aggregate || !state.aggregate.proxy_list) {
+    toast('No proxies available', 'error');
+    return;
+  }
+  const text = state.aggregate.proxy_list.join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    toast(`All ${state.aggregate.proxy_list.length} proxies copied`, 'success');
+  });
+}
+
+// ─── Toast ────────────────────────────────────────────────
+function toast(msg, type) {
+  const c = document.getElementById('toastContainer');
+  const el = document.createElement('div');
+  el.className = 'toast ' + (type || 'info');
+  el.textContent = msg;
+  c.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.3s'; setTimeout(() => el.remove(), 300); }, 3000);
+}
+
+// ─── Init ─────────────────────────────────────────────────
+connectWS();
+</script>
+</body>
+</html>
