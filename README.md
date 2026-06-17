@@ -13,19 +13,47 @@ Client ──→ HTTP─┼─ Tor #2  (127.0.0.1:1740)   20 unique exit IPs
 
 ## Quick Start
 
+### Linux / macOS
 ```bash
 # 1. Install Tor
-apt install -y tor
+apt install -y tor          # Debian/Ubuntu
+brew install tor            # macOS
 
-# 2. Start TorGrid (20 instances default)
-chmod +x run.sh
-sudo ./run.sh
+# 2. Install Python deps
+pip3 install -r requirements.txt
+
+# 3. Start TorGrid (20 instances default)
+python3 torgrid.py
 
 # Or with custom count:
-TORGRID_COUNT=10 sudo ./run.sh
+TORGRID_COUNT=10 python3 torgrid.py        # env var
+python3 torgrid.py -c 10                   # or CLI flag
 
-# 3. Open the dashboard
-#    http://127.0.0.1:8080
+# With SOCKS5 proxy authentication:
+python3 torgrid.py --auth-user myuser --auth-pass mypass
+
+# Full example: 15 instances with auth on ports 5000+
+python3 torgrid.py -c 15 --auth-user tor --auth-pass hunter2 --auth-port-base 5000
+```
+
+### Windows
+```powershell
+# 1. Install Tor from https://www.torproject.org/download/tor/
+#    Make sure tor.exe is in your PATH
+
+# 2. Install Python deps
+pip install -r requirements.txt
+
+# 3. Start TorGrid
+python torgrid.py
+
+# Or with custom count:
+$env:TORGRID_COUNT=10; python torgrid.py
+```
+
+### 3. Open the dashboard
+```
+http://127.0.0.1:8080
 ```
 
 ## Port Layout
