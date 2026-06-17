@@ -2,6 +2,9 @@
 
 Spawns N isolated Tor instances, each on its own SOCKS5 port with a unique exit IP.
 Provides a real-time Web dashboard for monitoring, management and stats.
+ 
+<img width="1543" height="972" alt="{40656FB6-6234-4A2F-B848-B4763B6F80C7}" src="https://github.com/user-attachments/assets/8eed6435-ecbc-48c4-8a5a-9703c1e80cce" />
+ 
 
 ```
                 ┌─ Tor #0  (127.0.0.1:1738)
