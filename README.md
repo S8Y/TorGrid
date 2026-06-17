@@ -85,13 +85,6 @@ http://127.0.0.1:8080
 - Filter/search instances by IP, port, or status
 - Individual "New Identity" and "Restart" buttons per instance
 
-**Design influences:**
-- Glass morphism with multi-layer shadow stacks (frontier-ui §16)
-- Ambient scan-line overlay on cards
-- Breathing/pulse animations on live indicators
-- Dark cyberpunk palette with cyan/purple/rose accents
-- Click ripple feedback on interactive elements
-
 ## API Reference
 
 | Method | Path | Description |
