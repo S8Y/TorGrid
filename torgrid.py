@@ -536,18 +536,13 @@ class TorGrid:
             inst.process = proc
             inst.started_at = time.time()
 
-            await asyncio.sleep(2 + inst.idx * 0.15)
+            await asyncio.sleep(max(8 + inst.idx * 0.3, 10))
 
             connected = False
-            for attempt in range(20 if retry == 0 else 30):
+            for attempt in range(35 if retry == 0 else 40):
                 try:
                     controller = Controller.from_port(port=inst.control_port)
-                    if inst.cookie_path.exists():
-                        controller.authenticate(cookie_path=str(inst.cookie_path))
-                    else:
-                        # Cookie file not ready yet, retry
-                        controller.close()
-                        raise ConnectionError("Cookie file not ready")
+                    controller.authenticate()
                     inst.controller = controller
                     inst.alive = True
                     connected = True
@@ -557,12 +552,12 @@ class TorGrid:
                         raise RuntimeError(
                             f"Tor process exited prematurely (code {inst.process.returncode})"
                         )
-                    await asyncio.sleep(1.5)
+                    await asyncio.sleep(2)
 
             if not connected:
                 raise RuntimeError(
                     f"Failed to connect to control port after "
-                    f"{'20' if retry == 0 else '30'} attempts"
+                    f"{'35' if retry == 0 else '40'} attempts"
                 )
 
         except Exception as e:
