@@ -13,38 +13,33 @@
   --bg-card: #0f0f12;
   --bg-hover: #161619;
   --bg-elevated: #1a1a1e;
-  --border-primary: rgba(255, 255, 255, 0.08);
-  --border-secondary: rgba(255, 255, 255, 0.12);
-  --border-accent: rgba(255, 255, 255, 0.2);
-  --border-subtle: rgba(255, 255, 255, 0.05);
-  --text-primary: rgba(255, 255, 255, 0.95);
-  --text-secondary: rgba(255, 255, 255, 0.55);
-  --text-muted: rgba(255, 255, 255, 0.35);
-  --text-dim: rgba(255, 255, 255, 0.2);
+  --border-primary: rgba(255,255,255,0.08);
+  --border-secondary: rgba(255,255,255,0.12);
+  --border-accent: rgba(255,255,255,0.2);
+  --border-subtle: rgba(255,255,255,0.05);
+  --text-primary: rgba(255,255,255,0.95);
+  --text-secondary: rgba(255,255,255,0.55);
+  --text-muted: rgba(255,255,255,0.35);
+  --text-dim: rgba(255,255,255,0.2);
   --accent-primary: #a855f7;
   --accent-secondary: #8b5cf6;
-  --accent-tertiary: #7c3aed;
-  --accent-glow: rgba(168, 85, 247, 0.15);
-  --accent-subtle: rgba(168, 85, 247, 0.08);
+  --accent-glow: rgba(168,85,247,0.15);
+  --accent-subtle: rgba(168,85,247,0.08);
   --success: #a855f7;
-  --success-bg: rgba(168, 85, 247, 0.15);
-  --success-border: rgba(168, 85, 247, 0.3);
+  --success-bg: rgba(168,85,247,0.15);
+  --success-border: rgba(168,85,247,0.3);
   --warning: #c084fc;
-  --warning-bg: rgba(192, 132, 252, 0.15);
-  --warning-border: rgba(192, 132, 252, 0.3);
+  --warning-bg: rgba(192,132,252,0.15);
   --danger: #f472b6;
-  --danger-bg: rgba(244, 114, 182, 0.15);
-  --danger-border: rgba(244, 114, 182, 0.3);
+  --danger-bg: rgba(244,114,182,0.15);
+  --danger-border: rgba(244,114,182,0.3);
   --info: #8b5cf6;
-  --info-bg: rgba(139, 92, 246, 0.15);
-  --info-border: rgba(139, 92, 246, 0.3);
+  --info-bg: rgba(139,92,246,0.15);
   --shadow-xs: 0 1px 2px rgba(0,0,0,0.4);
   --shadow-sm: 0 2px 4px rgba(0,0,0,0.5);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.6);
   --shadow-lg: 0 8px 24px rgba(0,0,0,0.7);
-  --shadow-xl: 0 16px 48px rgba(0,0,0,0.8);
-  --shadow-glow: 0 0 20px rgba(168,85,247,0.15);
-  --shadow-glow-lg: 0 0 40px rgba(168,85,247,0.2);
+  --shadow-glow: 0 0 20px var(--accent-glow);
   --shadow-inset: inset 0 1px 0 rgba(255,255,255,0.03);
   --radius-sm: 4px;
   --radius-md: 6px;
@@ -64,59 +59,38 @@ body{
   line-height:1.5;
 }
 
-/* ─── Static BG + ambient particles ──────────────── */
-.bg-grid{
+/* ─── Canvas particle background ──────────────── */
+#particleCanvas{
   position:fixed;inset:0;pointer-events:none;z-index:0;
-  background-image:linear-gradient(rgba(255,255,255,0.015)1px,transparent 1px),
-    linear-gradient(90deg,rgba(255,255,255,0.015)1px,transparent 1px);
-  background-size:48px 48px;
-}
-.bg-glow{
-  position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;
-}
-.bg-glow::before{
-  content:'';position:absolute;width:500px;height:500px;top:-200px;right:-200px;
-  background:radial-gradient(circle,rgba(168,85,247,0.07)0%,transparent 70%);
-  animation:drift 18s ease-in-out infinite alternate;
-}
-.bg-glow::after{
-  content:'';position:absolute;width:400px;height:400px;bottom:-150px;left:-150px;
-  background:radial-gradient(circle,rgba(192,132,252,0.06)0%,transparent 70%);
-  animation:drift 24s ease-in-out infinite alternate-reverse;
-}
-@keyframes drift{
-  0%{transform:translate(0,0)scale(1)}
-  100%{transform:translate(80px,-60px)scale(1.3)}
 }
 
-/* ─── Ambient orbs ──────────────────────────────── */
+/* ─── Ambient orbs ────────────────────────────── */
 @keyframes orb-float{
-  0%,100%{transform:translate(0,0)scale(1);opacity:0.2}
-  25%{transform:translate(30px,-20px)scale(1.1);opacity:0.3}
-  50%{transform:translate(-20px,10px)scale(0.9);opacity:0.15}
-  75%{transform:translate(10px,30px)scale(1.05);opacity:0.25}
+  0%,100%{transform:translate(0,0)scale(1);opacity:0.15}
+  33%{transform:translate(35px,-25px)scale(1.12);opacity:0.25}
+  66%{transform:translate(-25px,15px)scale(0.9);opacity:0.12}
 }
 .orb{
   position:fixed;border-radius:50%;pointer-events:none;z-index:0;
-  animation:orb-float 8s ease-in-out infinite;
+  animation:orb-float 10s ease-in-out infinite;
 }
-.orb1{width:300px;height:300px;top:10%;left:5%;
-  background:radial-gradient(circle,rgba(168,85,247,0.04),transparent 70%);
-  animation-delay:0s;animation-duration:9s;
+.orb1{width:400px;height:400px;top:5%;right:-5%;
+  background:radial-gradient(circle,rgba(168,85,247,0.05),transparent 70%);
+  animation-duration:12s;
 }
-.orb2{width:200px;height:200px;bottom:15%;right:10%;
-  background:radial-gradient(circle,rgba(139,92,246,0.05),transparent 70%);
-  animation-delay:-3s;animation-duration:11s;
+.orb2{width:300px;height:300px;bottom:10%;left:-8%;
+  background:radial-gradient(circle,rgba(139,92,246,0.04),transparent 70%);
+  animation-delay:-4s;animation-duration:15s;
 }
-.orb3{width:250px;height:250px;top:40%;left:60%;
+.orb3{width:250px;height:250px;top:45%;left:55%;
   background:radial-gradient(circle,rgba(192,132,252,0.03),transparent 70%);
-  animation-delay:-6s;animation-duration:7s;
+  animation-delay:-8s;animation-duration:9s;
 }
 
-/* ─── App layout ────────────────────────────────── */
+/* ─── App layout ──────────────────────────────── */
 .app{position:relative;z-index:1;max-width:1440px;margin:0 auto;padding:16px 20px 40px}
 
-/* ─── Header ────────────────────────────────────── */
+/* ─── Header ──────────────────────────────────── */
 .header{
   display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;
   padding:10px 20px;margin-bottom:16px;
@@ -127,98 +101,102 @@ body{
 .header::after{
   content:'';position:absolute;top:0;left:0;right:0;height:1px;
   background:linear-gradient(90deg,transparent,var(--accent-primary),transparent);
-  opacity:0.3;
+  opacity:0.4;
 }
 .header-left{display:flex;align-items:center;gap:12px}
 .logo{
   font-family:var(--font-mono);font-size:1.25rem;font-weight:700;
-  letter-spacing:-0.02em;background:linear-gradient(135deg,var(--accent-primary),var(--warning));
+  letter-spacing:-0.02em;
+  background:linear-gradient(135deg,var(--accent-primary),var(--warning));
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
 }
 .logo-sub{font-size:0.6rem;font-weight:400;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);margin-top:-1px}
 .header-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .status-indicator{font-size:0.76rem;color:var(--text-secondary);display:flex;align-items:center;gap:5px}
 .status-indicator .dot{
-  display:inline-block;width:6px;height:6px;border-radius:50%;
+  display:inline-block;width:7px;height:7px;border-radius:50%;
   transition:all 0.3s;
 }
-.dot.online{background:var(--success);box-shadow:0 0 8px var(--accent-primary);animation:pulse-dot 2s ease-in-out infinite}
-.dot.offline{background:var(--danger);box-shadow:0 0 8px var(--danger)}
-.dot.connecting{background:var(--warning);box-shadow:0 0 8px var(--warning);animation:pulse-dot 1s ease-in-out infinite}
-@keyframes pulse-dot{
-  0%,100%{opacity:0.4}
+.dot.online{background:var(--success);box-shadow:0 0 10px var(--accent-primary);animation:dot-pulse 2s ease-in-out infinite}
+.dot.offline{background:var(--danger);box-shadow:0 0 10px var(--danger)}
+.dot.connecting{background:var(--warning);box-shadow:0 0 10px var(--warning);animation:dot-pulse 1s ease-in-out infinite}
+@keyframes dot-pulse{
+  0%,100%{opacity:0.5}
   50%{opacity:1}
 }
 
-/* ─── Buttons ───────────────────────────────────── */
+/* ─── Buttons ─────────────────────────────────── */
 .btn{
   display:inline-flex;align-items:center;gap:5px;
   padding:6px 12px;border:1px solid var(--border-primary);
   border-radius:var(--radius-md);background:var(--bg-hover);
   color:var(--text-primary);font-size:0.74rem;font-family:var(--font-sans);
   cursor:pointer;transition:var(--transition-fast);user-select:none;white-space:nowrap;
+  position:relative;overflow:hidden;
 }
 .btn:hover{border-color:var(--border-secondary);background:var(--bg-elevated);transform:translateY(-1px);box-shadow:var(--shadow-sm)}
-.btn:active{transform:scale(0.97)}
-.btn:disabled{opacity:0.35;cursor:not-allowed;transform:none!important}
+.btn:active{transform:scale(0.96)}
+.btn:disabled{opacity:0.35;cursor:not-allowed;transform:none!important;box-shadow:none!important}
 .btn-primary{
   background:linear-gradient(135deg,var(--accent-primary),var(--accent-secondary));
   border-color:transparent;color:#000;font-weight:600;
 }
-.btn-primary:hover{filter:brightness(1.15);border-color:transparent}
+.btn-primary:hover{filter:brightness(1.15);border-color:transparent;box-shadow:0 0 16px var(--accent-glow)}
 .btn-sm{font-size:0.66rem;padding:3px 8px}
 .btn-danger{color:var(--danger);border-color:var(--danger-border)}
-.btn-danger:hover{background:var(--danger-bg);border-color:var(--danger)}
+.btn-danger:hover{background:var(--danger-bg);border-color:var(--danger);color:var(--danger)}
 .btn-icon{padding:4px 8px;font-size:0.8rem}
 
-/* ─── Stats bar ─────────────────────────────────── */
+/* ─── Stats bar ───────────────────────────────── */
 .stats-bar{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
   gap:8px;margin-bottom:14px;
 }
 .stat-card{
-  padding:12px 16px;background:var(--bg-card);
-  border:1px solid var(--border-primary);border-radius:var(--radius-lg);
+  padding:14px 16px;background:var(--bg-card);
+  border:1px solid var(--border-primary);border-radius:var(--radius-xl);
   position:relative;overflow:hidden;transition:var(--transition-fast);
   box-shadow:var(--shadow-xs),var(--shadow-inset);
+  cursor:default;
 }
-.stat-card:hover{border-color:var(--border-secondary)}
+.stat-card:hover{border-color:var(--border-secondary);transform:translateY(-1px);box-shadow:var(--shadow-md)}
 .stat-card::before{
   content:'';position:absolute;top:0;left:0;right:0;height:2px;
   background:linear-gradient(90deg,var(--accent-primary),var(--warning));
-  opacity:0.25;
+  opacity:0.3;
 }
-.stat-label{font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:2px}
-.stat-value{font-family:var(--font-mono);font-size:1.15rem;font-weight:700;line-height:1.2}
+.stat-label{font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:3px}
+.stat-value{font-family:var(--font-mono);font-size:1.2rem;font-weight:700;line-height:1.2}
 .stat-value.accent{color:var(--accent-primary)}
 .stat-value.info{color:var(--info)}
 .stat-value.danger{color:var(--danger)}
 .stat-value.warning{color:var(--warning)}
-.stat-sub{font-size:0.64rem;color:var(--text-dim);margin-top:1px}
-.stat-value.small{font-size:0.85rem}
+.stat-sub{font-size:0.64rem;color:var(--text-dim);margin-top:2px}
 
-/* ─── Scan line animation for stat cards ────────── */
-@keyframes stats-scan{
-  0%{top:-2px}
-  100%{top:100%}
+/* Scan line sweep on stat cards */
+@keyframes scan-sweep{
+  0%{top:-2px;opacity:0}
+  5%{opacity:0.4}
+  95%{opacity:0.4}
+  100%{top:100%;opacity:0}
 }
 .stat-card .scan-line{
   position:absolute;left:0;right:0;height:1px;
-  background:linear-gradient(90deg,transparent,var(--accent-glow),transparent);
-  pointer-events:none;animation:stats-scan 4s linear infinite;z-index:0;opacity:0.4;
+  background:linear-gradient(90deg,transparent,var(--accent-primary),transparent);
+  pointer-events:none;animation:scan-sweep 4s ease-in-out infinite;z-index:0;
 }
 
-/* ─── Breathing lifecycle on stat values ────────── */
+/* Breathing stat values */
 @keyframes breathe{
   0%,100%{transform:scale(1)}
-  50%{transform:scale(1.012)}
+  50%{transform:scale(1.015)}
 }
 .stat-value.breathe{
   animation:breathe 3.5s ease-in-out infinite;
   animation-delay:calc(var(--idx,0)*0.6s);
 }
 
-/* ─── Proxy bar ─────────────────────────────────── */
+/* ─── Proxy bar ───────────────────────────────── */
 .proxy-bar{
   display:flex;align-items:center;gap:8px;
   padding:8px 16px;margin-bottom:12px;
@@ -230,47 +208,48 @@ body{
 .proxy-bar-list{display:flex;gap:4px;flex-wrap:wrap;flex:1;min-width:0}
 .proxy-tag{
   font-family:var(--font-mono);font-size:0.6rem;
-  padding:2px 6px;border-radius:3px;
+  padding:2px 7px;border-radius:3px;
   background:var(--accent-subtle);border:1px solid var(--accent-glow);
   color:var(--accent-primary);white-space:nowrap;cursor:pointer;
   transition:var(--transition-fast);
 }
-.proxy-tag:hover{background:var(--accent-glow)}
+.proxy-tag:hover{background:var(--accent-glow);transform:translateY(-1px)}
 .proxy-tag.dead{background:var(--danger-bg);border-color:var(--danger-border);color:var(--danger)}
+.proxy-tag.dead:hover{background:var(--danger-bg)}
 
-/* ─── Controls ──────────────────────────────────── */
+/* ─── Controls ────────────────────────────────── */
 .controls{
   display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;
 }
 .search-box{
   flex:1;min-width:160px;
-  padding:6px 10px;border:1px solid var(--border-primary);
-  border-radius:var(--radius-md);background:var(--bg-card);
+  padding:7px 12px;border:1px solid var(--border-primary);
+  border-radius:var(--radius-lg);background:var(--bg-card);
   color:var(--text-primary);font-size:0.76rem;font-family:var(--font-mono);
   outline:none;transition:var(--transition-fast);
 }
 .search-box::placeholder{color:var(--text-dim)}
-.search-box:focus{border-color:var(--accent-primary);box-shadow:0 0 16px var(--accent-glow)}
-.filter-count{font-size:0.7rem;color:var(--text-muted)}
+.search-box:focus{border-color:var(--accent-primary);box-shadow:0 0 20px var(--accent-glow)}
+.filter-count{font-size:0.7rem;color:var(--text-muted);min-width:50px;text-align:right;font-family:var(--font-mono)}
 
-/* ─── Grid ───────────────────────────────────────── */
+/* ─── Instance grid ───────────────────────────── */
 .grid{
-  display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:8px;
 }
 
-/* ─── Cards ──────────────────────────────────────── */
+/* ─── Card ─────────────────────────────────────── */
 .card{
-  padding:12px 14px;background:var(--bg-card);
+  padding:14px 16px;background:var(--bg-card);
   border:1px solid var(--border-primary);border-radius:var(--radius-xl);
-  position:relative;overflow:hidden;
-  transition:var(--transition-fast),transform 0.4s cubic-bezier(0.16,1,0.3,1),
+  position:relative;overflow:hidden;cursor:default;
+  transition:border-color var(--transition-fast),transform 0.4s cubic-bezier(0.16,1,0.3,1),
     box-shadow 0.4s cubic-bezier(0.16,1,0.3,1);
   box-shadow:var(--shadow-xs),var(--shadow-inset);
-  animation:card-in 0.35s ease backwards;
+  animation:card-in 0.4s ease backwards;
 }
 .card::after{
   content:'';position:absolute;top:0;left:1px;right:1px;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.04),transparent);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.05),transparent);
   border-radius:inherit inherit 0 0;pointer-events:none;
 }
 .card:hover{
@@ -280,25 +259,27 @@ body{
 .card.dead{opacity:0.45}
 .card.dead:hover{opacity:0.65}
 @keyframes card-in{
-  from{opacity:0;transform:translateY(8px)}
-  to{opacity:1;transform:translateY(0)}
+  from{opacity:0;transform:translateY(10px)scale(0.98)}
+  to{opacity:1;transform:translateY(0)scale(1)}
 }
 
 /* Scan overlay per card */
+@keyframes card-scan{
+  0%{top:-1px;opacity:0}
+  10%{opacity:0.25}
+  90%{opacity:0.25}
+  100%{top:100%;opacity:0}
+}
 .card-scan{
   position:absolute;left:0;right:0;height:1px;
   background:linear-gradient(90deg,transparent,var(--accent-glow),transparent);
-  pointer-events:none;animation:scan 5s linear infinite;z-index:0;opacity:0.3;
-}
-@keyframes scan{
-  0%{top:-1px}
-  100%{top:100%}
+  pointer-events:none;animation:card-scan 5s linear infinite;z-index:0;
 }
 
 .card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;position:relative;z-index:1}
 .card-id{
   font-family:var(--font-mono);font-size:0.63rem;font-weight:600;
-  padding:2px 7px;border-radius:3px;
+  padding:2px 8px;border-radius:3px;
   background:var(--accent-subtle);border:1px solid var(--accent-glow);
   color:var(--accent-primary);
 }
@@ -310,15 +291,15 @@ body{
 
 .card-proxy{
   font-family:var(--font-mono);font-size:0.68rem;
-  padding:4px 7px;margin-bottom:6px;
-  background:var(--bg-tertiary);border-radius:3px;
+  padding:4px 8px;margin-bottom:6px;
+  background:var(--bg-tertiary);border-radius:var(--radius-md);
   border:1px solid var(--border-subtle);
   color:var(--accent-primary);word-break:break-all;
   display:flex;align-items:center;justify-content:space-between;gap:5px;
   position:relative;z-index:1;
 }
 .card-proxy .proxy-copy{
-  font-size:0.58rem;cursor:pointer;padding:1px 4px;border-radius:2px;
+  font-size:0.58rem;cursor:pointer;padding:2px 5px;border-radius:2px;
   border:none;background:var(--bg-hover);color:var(--text-dim);
   transition:var(--transition-fast);flex-shrink:0;
 }
@@ -328,7 +309,7 @@ body{
   display:grid;grid-template-columns:1fr 1fr;gap:2px 10px;font-size:0.68rem;
   margin-bottom:4px;position:relative;z-index:1;
 }
-.card-stat-row{display:flex;justify-content:space-between;align-items:center;padding:1px 0}
+.card-stat-row{display:flex;justify-content:space-between;align-items:center;padding:2px 0}
 .card-stat-label{color:var(--text-muted)}
 .card-stat-value{font-family:var(--font-mono);color:var(--text-secondary)}
 .card-stat-value.accent{color:var(--accent-primary)}
@@ -338,7 +319,7 @@ body{
 .card-error{
   font-size:0.6rem;color:var(--danger);
   background:var(--danger-bg);border:1px solid var(--danger-border);
-  padding:3px 7px;border-radius:3px;margin-bottom:4px;
+  padding:3px 8px;border-radius:var(--radius-md);margin-bottom:4px;
   word-break:break-all;position:relative;z-index:1;
 }
 
@@ -348,15 +329,26 @@ body{
   position:relative;z-index:1;
 }
 
-/* ─── Data pulse wave effect on cards ───────────── */
-@keyframes data-pulse{
-  0%{box-shadow:inset 0 0 0 0px var(--accent-glow)}
-  50%{box-shadow:inset 0 0 20px 4px var(--accent-glow)}
-  100%{box-shadow:inset 0 0 0 0px var(--accent-glow)}
+/* Data pulse on cards */
+@keyframes data-pulse-glow{
+  0%{box-shadow:inset 0 0 0 0px var(--accent-glow),var(--shadow-xs),var(--shadow-inset)}
+  40%{box-shadow:inset 0 0 24px 4px var(--accent-glow),var(--shadow-md),var(--shadow-inset)}
+  100%{box-shadow:inset 0 0 0 0px var(--accent-glow),var(--shadow-xs),var(--shadow-inset)}
 }
-.card.pulse{animation:data-pulse 1s cubic-bezier(0.16,1,0.3,1)}
+.pulse{animation:data-pulse-glow 0.8s cubic-bezier(0.16,1,0.3,1)}
 
-/* ─── Empty / Loading ───────────────────────────── */
+/* ─── Ripple effect ───────────────────────────── */
+.ripple{
+  position:absolute;border-radius:50%;
+  background:radial-gradient(circle,rgba(168,85,247,0.25) 0%,rgba(139,92,246,0.1) 50%,transparent 70%);
+  transform:scale(0);animation:ripple-effect 0.7s cubic-bezier(0.16,1,0.3,1);
+  pointer-events:none;z-index:10;
+}
+@keyframes ripple-effect{
+  to{transform:scale(5);opacity:0}
+}
+
+/* ─── Empty / Loading ─────────────────────────── */
 .empty-state{
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   padding:60px 20px;color:var(--text-dim);text-align:center;gap:10px;
@@ -364,12 +356,12 @@ body{
 .empty-state .icon{font-size:2.2rem;opacity:0.4}
 .empty-state .msg{font-size:0.85rem;color:var(--text-secondary)}
 .empty-state .sub{font-size:0.72rem}
-.spinner{width:20px;height:20px;border:2px solid var(--border-primary);border-top-color:var(--accent-primary);border-radius:50%;animation:spin 0.8s linear infinite}
+.spinner{width:22px;height:22px;border:2px solid var(--border-primary);border-top-color:var(--accent-primary);border-radius:50%;animation:spin 0.8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ─── Toast ──────────────────────────────────────── */
+/* ─── Toast ────────────────────────────────────── */
 .toast-container{
-  position:fixed;bottom:20px;right:20px;z-index:100;
+  position:fixed;bottom:20px;right:20px;z-index:10000;
   display:flex;flex-direction:column;gap:6px;pointer-events:none;
 }
 .toast{
@@ -380,21 +372,21 @@ body{
 .toast.success{background:var(--success-bg);color:var(--success);border-color:var(--success-border)}
 .toast.error{background:var(--danger-bg);color:var(--danger);border-color:var(--danger-border)}
 .toast.info{background:var(--accent-subtle);color:var(--accent-primary);border-color:var(--accent-glow)}
-@keyframes toast-in{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}
+@keyframes toast-in{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
 
-/* ─── Copy toast popup ──────────────────────────── */
+/* ─── Copy toast popup ────────────────────────── */
 .copy-toast{
   position:fixed;background:var(--bg-elevated);color:var(--success);
-  padding:3px 8px;border-radius:3px;font-size:0.62rem;
+  padding:3px 8px;border-radius:var(--radius-md);font-size:0.62rem;
   border:1px solid var(--success-border);pointer-events:none;
-  animation:copy-pop 0.8s ease forwards;z-index:200;
+  animation:copy-pop 0.8s ease forwards;z-index:20000;
 }
 @keyframes copy-pop{
-  0%{opacity:1;transform:translateY(0)}
-  100%{opacity:0;transform:translateY(-16px)}
+  0%{opacity:1;transform:translateY(0)scale(1)}
+  100%{opacity:0;transform:translateY(-18px)scale(0.9)}
 }
 
-/* ─── Responsive ────────────────────────────────── */
+/* ─── Responsive ──────────────────────────────── */
 @media(max-width:768px){
   .app{padding:10px}
   .header{flex-direction:column;align-items:stretch}
@@ -405,21 +397,27 @@ body{
   .controls{flex-direction:column}
   .search-box{min-width:100%}
 }
+@media(max-width:480px){
+  .stats-bar{grid-template-columns:1fr}
+}
 
-/* ─── Reduced motion ────────────────────────────── */
+/* ─── Reduced motion ──────────────────────────── */
 @media(prefers-reduced-motion:reduce){
-  .bg-glow::before,.bg-glow::after,.orb,.stat-value.breathe,.card-scan,
+  #particleCanvas{display:none}
+  .orb,.stat-value.breathe,.card-scan,
+  .stat-card .scan-line{animation:none!important}
   .card{animation:none!important;transition:none!important}
-  .stat-card .scan-line{display:none}
-  .toast{animation:none}
-  .card.pulse{animation:none}
+  .card:hover{transform:none!important}
+  .btn:hover{transform:none!important}
+  .pulse{animation:none!important}
+  .toast{animation:none!important}
+  .copy-toast{animation:none!important}
 }
 </style>
 </head>
 <body>
 
-<div class="bg-grid"></div>
-<div class="bg-glow"></div>
+<canvas id="particleCanvas"></canvas>
 <div class="orb orb1"></div>
 <div class="orb orb2"></div>
 <div class="orb orb3"></div>
@@ -475,7 +473,7 @@ body{
   <div class="proxy-bar">
     <span class="proxy-bar-label">SOCKS5</span>
     <div class="proxy-bar-list" id="proxyList"></div>
-    <button class="btn btn-sm" onclick="copyAllProxies()">📋</button>
+    <button class="btn btn-sm" onclick="copyAllProxies()" title="Copy all proxy URLs">📋</button>
   </div>
 
   <!-- Controls -->
@@ -485,42 +483,120 @@ body{
   </div>
 
   <!-- Grid -->
-  <div id="gridContainer"></div>
+  <div id="gridContainer">
+    <div class="empty-state">
+      <div class="spinner"></div>
+      <div class="msg">Connecting to TorGrid backend…</div>
+      <div class="sub">Waiting for WebSocket</div>
+    </div>
+  </div>
 </div>
 
-<!-- Toast -->
+<!-- Toast container -->
 <div class="toast-container" id="toastContainer"></div>
 
 <script>
-// ─── State ────────────────────────────────────────
+// ─── Particle Canvas ───────────────────────────
+(function(){
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (prefersReducedMotion) return;
+  const canvas = document.getElementById('particleCanvas');
+  const ctx = canvas.getContext('2d');
+  let w, h, particles = [];
+  const COUNT = 80;
+
+  function resize(){
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  for(let i=0; i<COUNT; i++){
+    particles.push({
+      x: Math.random() * w, y: Math.random() * h,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+      r: Math.random() * 1.2 + 0.3,
+      a: Math.random() * 0.3 + 0.05,
+    });
+  }
+
+  function draw(){
+    ctx.clearRect(0, 0, w, h);
+    for(const p of particles){
+      p.x += p.vx; p.y += p.vy;
+      if(p.x < 0) p.x = w; if(p.x > w) p.x = 0;
+      if(p.y < 0) p.y = h; if(p.y > h) p.y = 0;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(168, 85, 247, ${p.a})`;
+      ctx.fill();
+    }
+    // Draw connections
+    for(let i=0; i<particles.length; i++){
+      for(let j=i+1; j<particles.length; j++){
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if(dist < 120){
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(168, 85, 247, ${0.06 * (1 - dist/120)})`;
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ─── Ripple on click ───────────────────────────
+document.addEventListener('mousedown', function(e){
+  const target = e.target.closest('.btn, .card, .stat-card, .proxy-tag');
+  if(!target) return;
+  const ripple = document.createElement('span');
+  ripple.className = 'ripple';
+  const rect = target.getBoundingClientRect();
+  const size = Math.min(Math.max(rect.width, rect.height) * 1.3, 250);
+  ripple.style.width = ripple.style.height = size + 'px';
+  ripple.style.left = (e.clientX - rect.left - size/2) + 'px';
+  ripple.style.top = (e.clientY - rect.top - size/2) + 'px';
+  const pos = getComputedStyle(target).position;
+  if(pos === 'static') target.style.position = 'relative';
+  target.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 700);
+});
+
+// ─── State ──────────────────────────────────────
 let state = null;
 let ws = null;
 let reconnectDelay = 1;
 let reconnectTimer = null;
-let prevAlive = 0;
-let prevDead = 0;
 
-// ─── WebSocket ────────────────────────────────────
-function connectWS() {
+// ─── WebSocket ──────────────────────────────────
+function connectWS(){
   const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
   ws = new WebSocket(`${proto}//${location.host}/ws`);
 
   ws.onopen = () => {
     setStatus('online', 'Connected');
     reconnectDelay = 1;
-    if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+    if(reconnectTimer){ clearTimeout(reconnectTimer); reconnectTimer = null; }
   };
 
   ws.onmessage = (e) => {
-    try {
+    try{
       const msg = JSON.parse(e.data);
-      if (msg.type === 'state') {
+      if(msg.type === 'state'){
         const oldAgg = state ? state.aggregate : null;
         const newAgg = msg.aggregate;
         state = msg;
         render(msg);
         // Data pulse on state change
-        if (oldAgg && (oldAgg.alive !== newAgg.alive || oldAgg.dead !== newAgg.dead)) {
+        if(oldAgg && (oldAgg.alive !== newAgg.alive || oldAgg.dead !== newAgg.dead)){
           document.querySelectorAll('.card').forEach(c => {
             c.classList.remove('pulse');
             void c.offsetWidth;
@@ -529,19 +605,19 @@ function connectWS() {
           });
         }
       }
-    } catch(_) {}
+    } catch(_){}
   };
 
   ws.onclose = () => {
-    if (state) render(state);
+    if(state) render(state);
     setStatus('offline', 'Disconnected');
     scheduleReconnect();
   };
   ws.onerror = () => { ws.close(); };
 }
 
-function scheduleReconnect() {
-  if (reconnectTimer) return;
+function scheduleReconnect(){
+  if(reconnectTimer) return;
   const delay = Math.min(reconnectDelay, 30);
   setStatus('connecting', `Reconnecting in ${delay}s…`);
   reconnectTimer = setTimeout(() => {
@@ -551,41 +627,41 @@ function scheduleReconnect() {
   }, delay * 1000);
 }
 
-function setStatus(type, text) {
+function setStatus(type, text){
   document.getElementById('statusDot').className = 'dot ' + type;
   document.getElementById('statusText').textContent = text;
 }
 
-function esc(s) {
-  if (s == null) return '';
+function esc(s){
+  if(s == null) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// ─── Formatting ────────────────────────────────────
-function fmtBW(b) {
-  if (!b || b < 1) return '0 B/s';
-  if (b < 1024) return b + ' B/s';
-  if (b < 1048576) return (b/1024).toFixed(1) + ' KB/s';
+// ─── Formatting ──────────────────────────────────
+function fmtBW(b){
+  if(!b || b < 1) return '0 B/s';
+  if(b < 1024) return b + ' B/s';
+  if(b < 1048576) return (b/1024).toFixed(1) + ' KB/s';
   return (b/1048576).toFixed(2) + ' MB/s';
 }
-function fmtBytes(b) {
-  if (!b || b < 0) return '0 B';
-  if (b < 1024) return b + ' B';
-  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
-  if (b < 1073741824) return (b/1048576).toFixed(1) + ' MB';
+function fmtBytes(b){
+  if(!b || b < 0) return '0 B';
+  if(b < 1024) return b + ' B';
+  if(b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  if(b < 1073741824) return (b/1048576).toFixed(1) + ' MB';
   return (b/1073741824).toFixed(2) + ' GB';
 }
-function fmtUptime(s) {
-  if (!s || s < 0) return '0s';
-  if (s < 60) return Math.round(s) + 's';
-  if (s < 3600) return Math.floor(s/60) + 'm ' + Math.round(s%60) + 's';
-  if (s < 86400) return Math.floor(s/3600) + 'h ' + Math.floor((s%3600)/60) + 'm';
+function fmtUptime(s){
+  if(!s || s < 0) return '0s';
+  if(s < 60) return Math.round(s) + 's';
+  if(s < 3600) return Math.floor(s/60) + 'm ' + Math.round(s%60) + 's';
+  if(s < 86400) return Math.floor(s/3600) + 'h ' + Math.floor((s%3600)/60) + 'm';
   return Math.floor(s/86400) + 'd ' + Math.floor((s%86400)/3600) + 'h';
 }
-function fmtCountry(c) { return c ? c.toUpperCase() : '—'; }
+function fmtCountry(c){ return c ? c.toUpperCase() : '—'; }
 
-// ─── Render ────────────────────────────────────────
-function render(msg) {
+// ─── Render ──────────────────────────────────────
+function render(msg){
   const insts = msg.instances || [];
   const agg = msg.aggregate || {};
   const filter = (document.getElementById('searchBox').value || '').toLowerCase();
@@ -594,7 +670,7 @@ function render(msg) {
   // Stats
   const aliveEl = document.getElementById('statAlive');
   aliveEl.innerHTML = `${agg.alive || 0} <span style="font-size:0.65rem;font-weight:400;color:var(--text-dim)">/ ${agg.total || 0}</span>`;
-  if (agg.dead) {
+  if(agg.dead){
     document.getElementById('statDeadDetail').textContent = `${agg.dead} offline`;
     document.getElementById('statDeadDetail').style.color = 'var(--danger)';
   } else {
@@ -616,7 +692,7 @@ function render(msg) {
 
   // Filter
   let filtered = insts.filter(i => {
-    if (!filter) return true;
+    if(!filter) return true;
     return (i.exit_ip||'').toLowerCase().includes(filter)
       || (i.proxy||'').toLowerCase().includes(filter)
       || (i.alive ? 'alive' : 'dead').includes(filter)
@@ -628,7 +704,7 @@ function render(msg) {
 
   const container = document.getElementById('gridContainer');
 
-  if (insts.length === 0) {
+  if(insts.length === 0){
     container.innerHTML = `<div class="empty-state"><div class="spinner"></div><div class="msg">Booting Tor instances…</div><div class="sub">New circuits take 30–60s</div></div>`;
     return;
   }
@@ -636,7 +712,7 @@ function render(msg) {
   container.innerHTML = `<div class="grid">${filtered.map((inst, i) => renderCard(inst, i)).join('')}</div>`;
 }
 
-function renderCard(inst, idx) {
+function renderCard(inst, idx){
   const alive = inst.alive;
   const statusCls = alive ? 'alive' : 'dead';
   const style = `animation-delay:${(idx % 20) * 0.03}s`;
@@ -673,55 +749,54 @@ function renderCard(inst, idx) {
   </div>`;
 }
 
-// ─── Filter ────────────────────────────────────────
-function filterCards() { if (state) render(state); }
+// ─── Filter ──────────────────────────────────────
+function filterCards(){ if(state) render(state); }
 
-// ─── API ────────────────────────────────────────────
-async function apiPost(path) {
-  try {
+// ─── API ──────────────────────────────────────────
+async function apiPost(path){
+  try{
     const r = await fetch(path, { method: 'POST' });
     const data = await r.json();
-    if (!r.ok) throw new Error(data.detail || `HTTP ${r.status}`);
+    if(!r.ok) throw new Error(data.detail || `HTTP ${r.status}`);
     return data;
-  } catch (e) {
+  } catch(e){
     toast(e.message, 'error');
     return null;
   }
 }
 
-async function rotateInstance(idx) {
+async function rotateInstance(idx){
   const r = await apiPost(`/api/instances/${idx}/new-identity`);
-  if (r) toast(`T${String(idx).padStart(2,'0')} — new circuit`, 'info');
+  if(r) toast(`T${String(idx).padStart(2,'0')} — new circuit requested`, 'info');
 }
 
-async function rotateAll() {
+async function rotateAll(){
   toast('Rotating all circuits…', 'info');
   await apiPost('/api/new-identity-all');
 }
 
-async function restartInstance(idx) {
+async function restartInstance(idx){
   const r = await apiPost(`/api/instances/${idx}/restart`);
-  if (r) toast(`T${String(idx).padStart(2,'0')} — restarting`, 'info');
+  if(r) toast(`T${String(idx).padStart(2,'0')} — restarting`, 'info');
   else toast(`Restart failed for T${String(idx).padStart(2,'0')}`, 'error');
 }
 
-// ─── Clipboard ──────────────────────────────────────
-function copyProxy(text, el) {
+// ─── Clipboard ────────────────────────────────────
+function copyProxy(text, el){
   navigator.clipboard.writeText(text).then(() => {
     const tip = document.createElement('div');
     tip.className = 'copy-toast';
-    tip.textContent = 'Copied!';
+    tip.textContent = '✓ Copied!';
     tip.style.left = '50%';
     tip.style.top = '40%';
     tip.style.transform = 'translateX(-50%)';
     document.body.appendChild(tip);
     setTimeout(() => tip.remove(), 800);
-    toast('Proxy copied', 'success');
   });
 }
 
-function copyAllProxies() {
-  if (!state || !state.aggregate || !state.aggregate.proxy_list) {
+function copyAllProxies(){
+  if(!state || !state.aggregate || !state.aggregate.proxy_list){
     toast('No proxies available', 'error');
     return;
   }
@@ -730,8 +805,8 @@ function copyAllProxies() {
   });
 }
 
-// ─── Toast ──────────────────────────────────────────
-function toast(msg, type) {
+// ─── Toast ────────────────────────────────────────
+function toast(msg, type){
   const c = document.getElementById('toastContainer');
   const el = document.createElement('div');
   el.className = 'toast ' + (type || 'info');
@@ -740,7 +815,7 @@ function toast(msg, type) {
   setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.3s'; setTimeout(() => el.remove(), 300); }, 3000);
 }
 
-// ─── Init ───────────────────────────────────────────
+// ─── Init ─────────────────────────────────────────
 connectWS();
 </script>
 </body>

@@ -108,31 +108,11 @@ def find_tor_bin() -> str:
         print(f"Warning: specified tor binary '{ARGS.tor_bin}' not usable, searching…")
 
     candidates = ["tor", "tor.exe"]
+    import shutil
     for name in candidates:
-        for path in os.environ.get("PATH", "").split(os.pathsep):
-            full = os.path.join(path, name)
-            if os.path.isfile(full) and os.access(full, os.X_OK) and _verify_tor(full):
-                return full
-
-    common = [
-        "/usr/sbin/tor",
-        "/usr/bin/tor",
-        "/usr/local/bin/tor",
-        "C:\\Tor\\tor.exe",
-        "C:\\Program Files\\Tor\\tor.exe",
-        os.path.expanduser("~\\AppData\\Local\\Tor\\tor.exe"),
-        os.path.expanduser("~\\AppData\\Local\\Programs\\Tor\\tor.exe"),
-    ]
-    for loc in common:
-        if os.path.isfile(loc) and os.access(loc, os.X_OK) and _verify_tor(loc):
-            return loc
-
-    # Last resort — maybe PATH has it and verify failed due to some other reason
-    for name in candidates:
-        import shutil
         path = shutil.which(name)
-        if path:
-            return path
+        if path and _verify_tor(path):
+            return os.path.abspath(path)
 
     raise RuntimeError(
         "Could not find a working tor binary. "
@@ -351,13 +331,13 @@ class Socks5AuthProxy:
 class TorInstance:
     """One Tor process with its own SOCKS5 proxy."""
 
-    def __init__(self, idx: int, password: str):
+    def __init__(self, idx: int):
         self.idx = idx
         self.socks_port = SOCKS_BASE + idx
         self.auth_port = AUTH_SOCKS_BASE + idx
         self.control_port = CONTROL_BASE + idx
         self.data_dir = DATA_ROOT / f"instance_{idx}"
-        self.password = password
+        self.cookie_path = self.data_dir / "control_auth_cookie"
         self.process: Optional[Popen] = None
         self.controller: Optional[Controller] = None
         self.auth_proxy: Optional[Socks5AuthProxy] = None
@@ -385,21 +365,7 @@ class TorInstance:
             return f"socks5://{PROXY_AUTH_USER}:{PROXY_AUTH_PASS}@127.0.0.1:{self.auth_port}"
         return f"socks5://127.0.0.1:{self.socks_port}"
 
-    def hashed_password(self) -> str:
-        """Generate Tor-compatible hashed control password."""
-        result = __import__("subprocess").run(
-            [TOR_BIN, "--hash-password", self.password],
-            capture_output=True, text=True, timeout=10,
-        )
-        for line in result.stdout.strip().split("\n"):
-            line = line.strip()
-            if line.startswith("16:"):
-                return line
-        for line in result.stderr.strip().split("\n"):
-            if "16:" in line:
-                return line.strip()
-        return result.stdout.strip().split("\n")[-1]
-
+    @property
     def torrc_path(self) -> Path:
         return self.data_dir / "torrc"
 
@@ -455,7 +421,7 @@ class TorGrid:
         log.info("Starting %d Tor instances...", self.count)
 
         for idx in range(self.count):
-            inst = TorInstance(idx, secrets.token_hex(16))
+            inst = TorInstance(idx)
             self.instances.append(inst)
 
         tasks = [self._start_instance(inst) for inst in self.instances]
@@ -557,18 +523,13 @@ class TorGrid:
         inst.data_dir.mkdir(parents=True, exist_ok=True)
         inst.error = None
 
-        try:
-            hashed_pw = inst.hashed_password()
-        except Exception as e:
-            raise RuntimeError(f"Password hashing failed: {e}")
-
-        torrc = self._build_torrc(inst.idx, hashed_pw)
-        with open(inst.torrc_path(), "w") as f:
+        torrc = self._build_torrc(inst.idx)
+        with open(inst.torrc_path, "w") as f:
             f.write(torrc)
 
         try:
             proc = await asyncio.create_subprocess_exec(
-                TOR_BIN, "-f", str(inst.torrc_path()),
+                TOR_BIN, "-f", str(inst.torrc_path),
                 stdout=asyncio.subprocess.DEVNULL,
                 stderr=asyncio.subprocess.DEVNULL,
             )
@@ -581,7 +542,12 @@ class TorGrid:
             for attempt in range(20 if retry == 0 else 30):
                 try:
                     controller = Controller.from_port(port=inst.control_port)
-                    controller.authenticate(password=inst.password)
+                    if inst.cookie_path.exists():
+                        controller.authenticate(cookie_path=str(inst.cookie_path))
+                    else:
+                        # Cookie file not ready yet, retry
+                        controller.close()
+                        raise ConnectionError("Cookie file not ready")
                     inst.controller = controller
                     inst.alive = True
                     connected = True
@@ -605,15 +571,17 @@ class TorGrid:
             inst.error = sanitized
             raise RuntimeError(sanitized) from e
 
-    def _build_torrc(self, idx: int, hashed_pw: str) -> str:
+    def _build_torrc(self, idx: int) -> str:
         data_dir = DATA_ROOT / f"instance_{idx}"
+        cookie_path = data_dir / "control_auth_cookie"
         # No Log lines — memory-only logging. Tor output goes to DEVNULL
         # and we monitor via the control port.
         return (
             f"# TorGrid instance {idx}\n"
             f"SocksPort 127.0.0.1:{SOCKS_BASE + idx}\n"
             f"ControlPort 127.0.0.1:{CONTROL_BASE + idx}\n"
-            f"HashedControlPassword {hashed_pw}\n"
+            f"CookieAuthentication 1\n"
+            f"CookieAuthFile {cookie_path}\n"
             f"DataDirectory {data_dir}\n"
             f"PidFile {data_dir}/tor.pid\n"
             f"SafeLogging 1\n"
