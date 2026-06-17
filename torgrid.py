@@ -101,15 +101,19 @@ log = logging.getLogger("torgrid")
 
 
 def find_tor_bin() -> str:
-    """Locate the tor binary on this system."""
-    if ARGS.tor_bin and os.path.isfile(ARGS.tor_bin):
-        return ARGS.tor_bin
+    """Locate the tor binary on this system and verify it works."""
+    if ARGS.tor_bin:
+        if _verify_tor(ARGS.tor_bin):
+            return ARGS.tor_bin
+        print(f"Warning: specified tor binary '{ARGS.tor_bin}' not usable, searching…")
+
     candidates = ["tor", "tor.exe"]
     for name in candidates:
         for path in os.environ.get("PATH", "").split(os.pathsep):
             full = os.path.join(path, name)
-            if os.path.isfile(full) and os.access(full, os.X_OK):
+            if os.path.isfile(full) and os.access(full, os.X_OK) and _verify_tor(full):
                 return full
+
     common = [
         "/usr/sbin/tor",
         "/usr/bin/tor",
@@ -117,11 +121,36 @@ def find_tor_bin() -> str:
         "C:\\Tor\\tor.exe",
         "C:\\Program Files\\Tor\\tor.exe",
         os.path.expanduser("~\\AppData\\Local\\Tor\\tor.exe"),
+        os.path.expanduser("~\\AppData\\Local\\Programs\\Tor\\tor.exe"),
     ]
     for loc in common:
-        if os.path.isfile(loc) and os.access(loc, os.X_OK):
+        if os.path.isfile(loc) and os.access(loc, os.X_OK) and _verify_tor(loc):
             return loc
-    return "tor"
+
+    # Last resort — maybe PATH has it and verify failed due to some other reason
+    for name in candidates:
+        import shutil
+        path = shutil.which(name)
+        if path:
+            return path
+
+    raise RuntimeError(
+        "Could not find a working tor binary. "
+        "Install Tor (https://www.torproject.org/download/) and ensure it's in PATH, "
+        "or use --tor-bin to specify the path."
+    )
+
+
+def _verify_tor(path: str) -> bool:
+    """Check that tor binary works by running --hash-password (fast)."""
+    try:
+        result = __import__("subprocess").run(
+            [path, "--hash-password", "test"],
+            capture_output=True, text=True, timeout=10,
+        )
+        return result.returncode == 0 and ("16:" in result.stdout or "16:" in result.stderr)
+    except Exception:
+        return False
 
 
 TOR_BIN = os.environ.get("TORGRID_TOR_BIN") or find_tor_bin()

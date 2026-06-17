@@ -1,337 +1,418 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TorGrid — SOCKS5 Proxy Pool</title>
 <style>
-/* ─── Reset & Base ─────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* ─── StreamHub Theme (paste.rs/URk5Q) ─────────────────── */
 :root {
-  --bg-deep: #0a0a0f;
-  --bg-surface: #12121a;
-  --bg-card: rgba(18, 18, 30, 0.75);
-  --bg-glass: rgba(255, 255, 255, 0.03);
-  --border-glass: rgba(255, 255, 255, 0.06);
-  --border-hover: rgba(255, 255, 255, 0.12);
-  --text-primary: #e8e8f0;
-  --text-secondary: #8888a0;
-  --text-muted: #555570;
-  --accent-cyan: #00e5ff;
-  --accent-purple: #7c4dff;
-  --accent-rose: #ff4081;
-  --accent-green: #00e676;
-  --accent-orange: #ff9100;
-  --accent-red: #ff1744;
-  --glow-cyan: rgba(0, 229, 255, 0.15);
-  --glow-purple: rgba(124, 77, 255, 0.15);
-  --glow-green: rgba(0, 230, 118, 0.12);
-  --radius: 12px;
-  --radius-sm: 8px;
-  --radius-lg: 16px;
-  --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
-  --font-sans: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro', system-ui, sans-serif;
-}
-html { font-size: 14px; }
-body {
-  font-family: var(--font-sans);
-  background: var(--bg-deep);
-  color: var(--text-primary);
-  min-height: 100vh;
-  overflow-x: hidden;
-  line-height: 1.5;
-}
-.bg-grid {
-  position: fixed; inset: 0; pointer-events: none; z-index: 0;
-  background-image:
-    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-  background-size: 40px 40px;
-}
-.bg-glow {
-  position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
-}
-.bg-glow::before {
-  content: ''; position: absolute;
-  width: 600px; height: 600px; top: -200px; right: -200px;
-  background: radial-gradient(circle, var(--glow-cyan) 0%, transparent 70%);
-  animation: glow-drift 20s ease-in-out infinite alternate;
-}
-.bg-glow::after {
-  content: ''; position: absolute;
-  width: 500px; height: 500px; bottom: -150px; left: -150px;
-  background: radial-gradient(circle, var(--glow-purple) 0%, transparent 70%);
-  animation: glow-drift 25s ease-in-out infinite alternate-reverse;
-}
-@keyframes glow-drift {
-  0% { transform: translate(0, 0) scale(1); }
-  100% { transform: translate(80px, -60px) scale(1.3); }
+  --bg-primary: #0b0b0d;
+  --bg-secondary: #0d0d10;
+  --bg-tertiary: #101014;
+  --bg-card: #0f0f12;
+  --bg-hover: #161619;
+  --bg-elevated: #1a1a1e;
+  --border-primary: rgba(255, 255, 255, 0.08);
+  --border-secondary: rgba(255, 255, 255, 0.12);
+  --border-accent: rgba(255, 255, 255, 0.2);
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --text-primary: rgba(255, 255, 255, 0.95);
+  --text-secondary: rgba(255, 255, 255, 0.55);
+  --text-muted: rgba(255, 255, 255, 0.35);
+  --text-dim: rgba(255, 255, 255, 0.2);
+  --accent-primary: #a855f7;
+  --accent-secondary: #8b5cf6;
+  --accent-tertiary: #7c3aed;
+  --accent-glow: rgba(168, 85, 247, 0.15);
+  --accent-subtle: rgba(168, 85, 247, 0.08);
+  --success: #a855f7;
+  --success-bg: rgba(168, 85, 247, 0.15);
+  --success-border: rgba(168, 85, 247, 0.3);
+  --warning: #c084fc;
+  --warning-bg: rgba(192, 132, 252, 0.15);
+  --warning-border: rgba(192, 132, 252, 0.3);
+  --danger: #f472b6;
+  --danger-bg: rgba(244, 114, 182, 0.15);
+  --danger-border: rgba(244, 114, 182, 0.3);
+  --info: #8b5cf6;
+  --info-bg: rgba(139, 92, 246, 0.15);
+  --info-border: rgba(139, 92, 246, 0.3);
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.4);
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.5);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.6);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.7);
+  --shadow-xl: 0 16px 48px rgba(0,0,0,0.8);
+  --shadow-glow: 0 0 20px rgba(168,85,247,0.15);
+  --shadow-glow-lg: 0 0 40px rgba(168,85,247,0.2);
+  --shadow-inset: inset 0 1px 0 rgba(255,255,255,0.03);
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --transition-fast: 0.15s cubic-bezier(0.4,0,0.2,1);
+  --transition-normal: 0.25s cubic-bezier(0.4,0,0.2,1);
+  --font-mono: 'SF Mono','Fira Code','Cascadia Code','JetBrains Mono',monospace;
+  --font-sans: -apple-system,BlinkMacSystemFont,'Inter','SF Pro',system-ui,sans-serif;
 }
 
-/* ─── Layout ────────────────────────────────────────────── */
-.app { position: relative; z-index: 1; max-width: 1440px; margin: 0 auto; padding: 20px 24px 60px; }
-
-/* ─── Header ────────────────────────────────────────────── */
-.header {
-  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
-  padding: 14px 22px; margin-bottom: 20px;
-  background: var(--bg-glass);
-  border: 1px solid var(--border-glass);
-  border-radius: var(--radius-lg);
-  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-}
-.header-left { display: flex; align-items: center; gap: 14px; }
-.logo {
-  font-family: var(--font-mono); font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em;
-  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-}
-.logo-sub { font-size: 0.65rem; font-weight: 400; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); margin-top: -2px; }
-.header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.status-indicator { font-size: 0.78rem; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
-.status-indicator .dot {
-  display: inline-block; width: 7px; height: 7px; border-radius: 50%;
-  transition: all 0.3s;
-}
-.status-indicator .dot.online { background: var(--accent-green); box-shadow: 0 0 8px var(--accent-green); animation: pulse-dot 2s ease-in-out infinite; }
-.status-indicator .dot.offline { background: var(--accent-red); box-shadow: 0 0 8px var(--accent-red); }
-.status-indicator .dot.connecting { background: var(--accent-orange); box-shadow: 0 0 8px var(--accent-orange); animation: pulse-dot 1s ease-in-out infinite; }
-@keyframes pulse-dot {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px;background:var(--bg-primary)}
+body{
+  font-family:var(--font-sans);background:var(--bg-primary);
+  color:var(--text-primary);min-height:100vh;overflow-x:hidden;
+  line-height:1.5;
 }
 
-/* ─── Buttons ───────────────────────────────────────────── */
-.btn {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 7px 14px; border: 1px solid var(--border-glass);
-  border-radius: var(--radius-sm); background: var(--bg-glass);
-  color: var(--text-primary); font-size: 0.76rem; font-family: var(--font-sans);
-  cursor: pointer; transition: all 0.2s ease;
-  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-  user-select: none; white-space: nowrap;
+/* ─── Static BG + ambient particles ──────────────── */
+.bg-grid{
+  position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(255,255,255,0.015)1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,0.015)1px,transparent 1px);
+  background-size:48px 48px;
 }
-.btn:hover { border-color: var(--border-hover); background: rgba(255,255,255,0.06); transform: translateY(-1px); }
-.btn:active { transform: scale(0.97); }
-.btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none !important; }
-.btn-primary {
-  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
-  border-color: transparent; color: #000; font-weight: 600;
+.bg-glow{
+  position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;
 }
-.btn-primary:hover { filter: brightness(1.15); border-color: transparent; }
-.btn-sm { font-size: 0.68rem; padding: 4px 10px; }
-.btn-danger { border-color: rgba(255,23,68,0.2); color: var(--accent-red); }
-.btn-danger:hover { border-color: rgba(255,23,68,0.4); background: rgba(255,23,68,0.08); }
-
-/* ─── Stats Bar ─────────────────────────────────────────── */
-.stats-bar {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 10px; margin-bottom: 18px;
+.bg-glow::before{
+  content:'';position:absolute;width:500px;height:500px;top:-200px;right:-200px;
+  background:radial-gradient(circle,rgba(168,85,247,0.07)0%,transparent 70%);
+  animation:drift 18s ease-in-out infinite alternate;
 }
-.stat-card {
-  padding: 14px 18px;
-  background: var(--bg-glass); border: 1px solid var(--border-glass);
-  border-radius: var(--radius); position: relative; overflow: hidden;
-  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-  transition: border-color 0.3s;
+.bg-glow::after{
+  content:'';position:absolute;width:400px;height:400px;bottom:-150px;left:-150px;
+  background:radial-gradient(circle,rgba(192,132,252,0.06)0%,transparent 70%);
+  animation:drift 24s ease-in-out infinite alternate-reverse;
 }
-.stat-card:hover { border-color: var(--border-hover); }
-.stat-card::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
-  opacity: 0.3;
-}
-.stat-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 3px; }
-.stat-value { font-family: var(--font-mono); font-size: 1.25rem; font-weight: 700; line-height: 1.2; }
-.stat-value.cyan { color: var(--accent-cyan); }
-.stat-value.purple { color: var(--accent-purple); }
-.stat-value.green { color: var(--accent-green); }
-.stat-value.rose { color: var(--accent-rose); }
-.stat-value.orange { color: var(--accent-orange); }
-.stat-sub { font-size: 0.66rem; color: var(--text-secondary); margin-top: 1px; }
-.stat-value.small { font-size: 0.9rem; }
-
-/* ─── Proxy Bar ─────────────────────────────────────────── */
-.proxy-bar {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 18px; margin-bottom: 16px;
-  background: var(--bg-glass); border: 1px solid var(--border-glass);
-  border-radius: var(--radius); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-  flex-wrap: wrap;
-}
-.proxy-bar-label { font-size: 0.7rem; color: var(--text-muted); white-space: nowrap; }
-.proxy-bar-list { display: flex; gap: 5px; flex-wrap: wrap; flex: 1; min-width: 0; }
-.proxy-tag {
-  font-family: var(--font-mono); font-size: 0.62rem;
-  padding: 2px 7px; border-radius: 4px;
-  background: rgba(0, 229, 255, 0.06);
-  border: 1px solid rgba(0, 229, 255, 0.1);
-  color: var(--accent-cyan); white-space: nowrap;
-  cursor: pointer; transition: all 0.15s;
-}
-.proxy-tag:hover { background: rgba(0, 229, 255, 0.12); }
-.proxy-tag.dead { background: rgba(255, 23, 68, 0.06); border-color: rgba(255, 23, 68, 0.1); color: var(--accent-red); }
-.copy-toast {
-  position: absolute; background: #1a1a2e; color: var(--accent-green);
-  padding: 4px 10px; border-radius: 4px; font-size: 0.65rem;
-  border: 1px solid rgba(0, 230, 118, 0.2);
-  pointer-events: none; animation: copy-pop 1s ease forwards;
-}
-@keyframes copy-pop {
-  0% { opacity: 1; transform: translateY(0); }
-  100% { opacity: 0; transform: translateY(-20px); }
+@keyframes drift{
+  0%{transform:translate(0,0)scale(1)}
+  100%{transform:translate(80px,-60px)scale(1.3)}
 }
 
-/* ─── Controls ──────────────────────────────────────────── */
-.controls {
-  display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;
+/* ─── Ambient orbs ──────────────────────────────── */
+@keyframes orb-float{
+  0%,100%{transform:translate(0,0)scale(1);opacity:0.2}
+  25%{transform:translate(30px,-20px)scale(1.1);opacity:0.3}
+  50%{transform:translate(-20px,10px)scale(0.9);opacity:0.15}
+  75%{transform:translate(10px,30px)scale(1.05);opacity:0.25}
 }
-.search-box {
-  flex: 1; min-width: 180px;
-  padding: 7px 12px; border: 1px solid var(--border-glass);
-  border-radius: var(--radius-sm); background: var(--bg-glass);
-  color: var(--text-primary); font-size: 0.78rem; font-family: var(--font-mono);
-  outline: none; transition: border-color 0.2s, box-shadow 0.2s;
-  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+.orb{
+  position:fixed;border-radius:50%;pointer-events:none;z-index:0;
+  animation:orb-float 8s ease-in-out infinite;
 }
-.search-box::placeholder { color: var(--text-muted); }
-.search-box:focus { border-color: var(--accent-cyan); box-shadow: 0 0 16px var(--glow-cyan); }
-.filter-count { font-size: 0.72rem; color: var(--text-muted); }
-
-/* ─── Grid ──────────────────────────────────────────────── */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-  gap: 10px;
+.orb1{width:300px;height:300px;top:10%;left:5%;
+  background:radial-gradient(circle,rgba(168,85,247,0.04),transparent 70%);
+  animation-delay:0s;animation-duration:9s;
 }
-
-/* ─── Card ──────────────────────────────────────────────── */
-.card {
-  padding: 14px 16px;
-  background: var(--bg-glass);
-  border: 1px solid var(--border-glass);
-  border-radius: var(--radius);
-  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-  transition: all 0.3s ease;
-  position: relative; overflow: visible;
-  animation: card-in 0.35s ease backwards;
+.orb2{width:200px;height:200px;bottom:15%;right:10%;
+  background:radial-gradient(circle,rgba(139,92,246,0.05),transparent 70%);
+  animation-delay:-3s;animation-duration:11s;
 }
-.card:hover { border-color: var(--border-hover); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
-.card.dead { opacity: 0.5; }
-.card.dead:hover { opacity: 0.7; }
-@keyframes card-in {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+.orb3{width:250px;height:250px;top:40%;left:60%;
+  background:radial-gradient(circle,rgba(192,132,252,0.03),transparent 70%);
+  animation-delay:-6s;animation-duration:7s;
 }
 
-.card-top {
-  display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
-}
-.card-id {
-  font-family: var(--font-mono); font-size: 0.65rem; font-weight: 600;
-  padding: 2px 8px; border-radius: 4px;
-  background: rgba(0, 229, 255, 0.08);
-  border: 1px solid rgba(0, 229, 255, 0.1);
-  color: var(--accent-cyan);
-}
-.card-id.dead { background: rgba(255, 23, 68, 0.08); border-color: rgba(255, 23, 68, 0.12); color: var(--accent-red); }
-.card-id.reviving { background: rgba(255, 145, 0, 0.08); border-color: rgba(255, 145, 0, 0.12); color: var(--accent-orange); }
-.card-status { display: flex; align-items: center; gap: 5px; font-size: 0.68rem; color: var(--text-secondary); }
-.card-status .dot { width: 6px; height: 6px; border-radius: 50%; }
-.card-status .dot.alive { background: var(--accent-green); box-shadow: 0 0 6px var(--accent-green); }
-.card-status .dot.dead { background: var(--accent-red); box-shadow: 0 0 6px var(--accent-red); }
-.card-status .dot.reviving { background: var(--accent-orange); box-shadow: 0 0 6px var(--accent-orange); animation: pulse-dot 1s ease-in-out infinite; }
+/* ─── App layout ────────────────────────────────── */
+.app{position:relative;z-index:1;max-width:1440px;margin:0 auto;padding:16px 20px 40px}
 
-.card-proxy {
-  font-family: var(--font-mono); font-size: 0.7rem;
-  padding: 5px 8px; margin-bottom: 8px;
-  background: rgba(0,0,0,0.3); border-radius: 4px;
-  border: 1px solid rgba(255,255,255,0.04);
-  color: var(--accent-cyan); word-break: break-all;
-  display: flex; align-items: center; justify-content: space-between; gap: 6px;
-  position: relative;
+/* ─── Header ────────────────────────────────────── */
+.header{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;
+  padding:10px 20px;margin-bottom:16px;
+  background:var(--bg-card);border:1px solid var(--border-primary);
+  border-radius:var(--radius-xl);position:relative;overflow:hidden;
+  box-shadow:var(--shadow-sm),var(--shadow-inset);
 }
-.card-proxy .proxy-copy {
-  font-size: 0.6rem; cursor: pointer; padding: 1px 5px; border-radius: 3px;
-  border: none; background: rgba(255,255,255,0.06); color: var(--text-secondary);
-  transition: all 0.15s; flex-shrink: 0;
+.header::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--accent-primary),transparent);
+  opacity:0.3;
 }
-.card-proxy .proxy-copy:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
-
-.card-stats {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 4px 14px; font-size: 0.7rem;
-  margin-bottom: 6px;
+.header-left{display:flex;align-items:center;gap:12px}
+.logo{
+  font-family:var(--font-mono);font-size:1.25rem;font-weight:700;
+  letter-spacing:-0.02em;background:linear-gradient(135deg,var(--accent-primary),var(--warning));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
 }
-.card-stat-row { display: flex; justify-content: space-between; align-items: center; }
-.card-stat-label { color: var(--text-muted); }
-.card-stat-value { font-family: var(--font-mono); color: var(--text-secondary); }
-.card-stat-value.cyan { color: var(--accent-cyan); }
-.card-stat-value.purple { color: var(--accent-purple); }
-.card-stat-value.rose { color: var(--accent-rose); }
-
-.card-error {
-  font-size: 0.62rem; color: var(--accent-red);
-  background: rgba(255, 23, 68, 0.06);
-  border: 1px solid rgba(255, 23, 68, 0.08);
-  padding: 4px 8px; border-radius: 4px; margin-bottom: 6px;
-  word-break: break-all;
+.logo-sub{font-size:0.6rem;font-weight:400;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);margin-top:-1px}
+.header-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.status-indicator{font-size:0.76rem;color:var(--text-secondary);display:flex;align-items:center;gap:5px}
+.status-indicator .dot{
+  display:inline-block;width:6px;height:6px;border-radius:50%;
+  transition:all 0.3s;
+}
+.dot.online{background:var(--success);box-shadow:0 0 8px var(--accent-primary);animation:pulse-dot 2s ease-in-out infinite}
+.dot.offline{background:var(--danger);box-shadow:0 0 8px var(--danger)}
+.dot.connecting{background:var(--warning);box-shadow:0 0 8px var(--warning);animation:pulse-dot 1s ease-in-out infinite}
+@keyframes pulse-dot{
+  0%,100%{opacity:0.4}
+  50%{opacity:1}
 }
 
-.card-actions {
-  display: flex; gap: 5px; margin-top: 6px;
-  padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.04);
+/* ─── Buttons ───────────────────────────────────── */
+.btn{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:6px 12px;border:1px solid var(--border-primary);
+  border-radius:var(--radius-md);background:var(--bg-hover);
+  color:var(--text-primary);font-size:0.74rem;font-family:var(--font-sans);
+  cursor:pointer;transition:var(--transition-fast);user-select:none;white-space:nowrap;
+}
+.btn:hover{border-color:var(--border-secondary);background:var(--bg-elevated);transform:translateY(-1px);box-shadow:var(--shadow-sm)}
+.btn:active{transform:scale(0.97)}
+.btn:disabled{opacity:0.35;cursor:not-allowed;transform:none!important}
+.btn-primary{
+  background:linear-gradient(135deg,var(--accent-primary),var(--accent-secondary));
+  border-color:transparent;color:#000;font-weight:600;
+}
+.btn-primary:hover{filter:brightness(1.15);border-color:transparent}
+.btn-sm{font-size:0.66rem;padding:3px 8px}
+.btn-danger{color:var(--danger);border-color:var(--danger-border)}
+.btn-danger:hover{background:var(--danger-bg);border-color:var(--danger)}
+.btn-icon{padding:4px 8px;font-size:0.8rem}
+
+/* ─── Stats bar ─────────────────────────────────── */
+.stats-bar{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
+  gap:8px;margin-bottom:14px;
+}
+.stat-card{
+  padding:12px 16px;background:var(--bg-card);
+  border:1px solid var(--border-primary);border-radius:var(--radius-lg);
+  position:relative;overflow:hidden;transition:var(--transition-fast);
+  box-shadow:var(--shadow-xs),var(--shadow-inset);
+}
+.stat-card:hover{border-color:var(--border-secondary)}
+.stat-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--accent-primary),var(--warning));
+  opacity:0.25;
+}
+.stat-label{font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:2px}
+.stat-value{font-family:var(--font-mono);font-size:1.15rem;font-weight:700;line-height:1.2}
+.stat-value.accent{color:var(--accent-primary)}
+.stat-value.info{color:var(--info)}
+.stat-value.danger{color:var(--danger)}
+.stat-value.warning{color:var(--warning)}
+.stat-sub{font-size:0.64rem;color:var(--text-dim);margin-top:1px}
+.stat-value.small{font-size:0.85rem}
+
+/* ─── Scan line animation for stat cards ────────── */
+@keyframes stats-scan{
+  0%{top:-2px}
+  100%{top:100%}
+}
+.stat-card .scan-line{
+  position:absolute;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--accent-glow),transparent);
+  pointer-events:none;animation:stats-scan 4s linear infinite;z-index:0;opacity:0.4;
 }
 
-/* ─── Empty / Loading ───────────────────────────────────── */
-.empty-state {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 60px 20px; color: var(--text-muted); text-align: center; gap: 12px;
+/* ─── Breathing lifecycle on stat values ────────── */
+@keyframes breathe{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.012)}
 }
-.empty-state .icon { font-size: 2.5rem; opacity: 0.5; }
-.empty-state .msg { font-size: 0.9rem; }
-.empty-state .sub { font-size: 0.75rem; color: var(--text-muted); }
-.spinner { width: 22px; height: 22px; border: 2px solid var(--border-glass); border-top-color: var(--accent-cyan); border-radius: 50%; animation: spin 0.8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* ─── Scan Line Overlay ─────────────────────────────────── */
-.scan-line {
-  position: absolute; left: 0; right: 0; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(0,229,255,0.06), transparent);
-  pointer-events: none; animation: scan 6s linear infinite; z-index: 0;
-}
-@keyframes scan {
-  0% { top: -1px; }
-  100% { top: 100%; }
+.stat-value.breathe{
+  animation:breathe 3.5s ease-in-out infinite;
+  animation-delay:calc(var(--idx,0)*0.6s);
 }
 
-/* ─── Toast ─────────────────────────────────────────────── */
-.toast-container {
-  position: fixed; bottom: 20px; right: 20px; z-index: 100;
-  display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+/* ─── Proxy bar ─────────────────────────────────── */
+.proxy-bar{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 16px;margin-bottom:12px;
+  background:var(--bg-card);border:1px solid var(--border-primary);
+  border-radius:var(--radius-lg);flex-wrap:wrap;
+  box-shadow:var(--shadow-xs),var(--shadow-inset);
 }
-.toast {
-  padding: 9px 16px; border-radius: var(--radius-sm);
-  font-size: 0.78rem; animation: toast-in 0.3s ease;
-  pointer-events: auto;
-  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--border-glass);
+.proxy-bar-label{font-size:0.68rem;color:var(--text-muted);white-space:nowrap}
+.proxy-bar-list{display:flex;gap:4px;flex-wrap:wrap;flex:1;min-width:0}
+.proxy-tag{
+  font-family:var(--font-mono);font-size:0.6rem;
+  padding:2px 6px;border-radius:3px;
+  background:var(--accent-subtle);border:1px solid var(--accent-glow);
+  color:var(--accent-primary);white-space:nowrap;cursor:pointer;
+  transition:var(--transition-fast);
 }
-.toast.success { background: rgba(0, 230, 118, 0.1); color: var(--accent-green); border-color: rgba(0, 230, 118, 0.15); }
-.toast.error { background: rgba(255, 23, 68, 0.1); color: var(--accent-red); border-color: rgba(255, 23, 68, 0.15); }
-.toast.info { background: rgba(0, 229, 255, 0.07); color: var(--accent-cyan); border-color: rgba(0, 229, 255, 0.1); }
-@keyframes toast-in { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
+.proxy-tag:hover{background:var(--accent-glow)}
+.proxy-tag.dead{background:var(--danger-bg);border-color:var(--danger-border);color:var(--danger)}
 
-/* ─── Responsive ────────────────────────────────────────── */
-@media (max-width: 768px) {
-  .app { padding: 12px; }
-  .header { flex-direction: column; align-items: stretch; }
-  .header-right { justify-content: stretch; }
-  .header-right .btn { flex: 1; justify-content: center; }
-  .stats-bar { grid-template-columns: repeat(2, 1fr); }
-  .grid { grid-template-columns: 1fr; }
-  .stat-value { font-size: 1rem; }
-  .controls { flex-direction: column; }
-  .search-box { min-width: 100%; }
+/* ─── Controls ──────────────────────────────────── */
+.controls{
+  display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;
+}
+.search-box{
+  flex:1;min-width:160px;
+  padding:6px 10px;border:1px solid var(--border-primary);
+  border-radius:var(--radius-md);background:var(--bg-card);
+  color:var(--text-primary);font-size:0.76rem;font-family:var(--font-mono);
+  outline:none;transition:var(--transition-fast);
+}
+.search-box::placeholder{color:var(--text-dim)}
+.search-box:focus{border-color:var(--accent-primary);box-shadow:0 0 16px var(--accent-glow)}
+.filter-count{font-size:0.7rem;color:var(--text-muted)}
+
+/* ─── Grid ───────────────────────────────────────── */
+.grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;
+}
+
+/* ─── Cards ──────────────────────────────────────── */
+.card{
+  padding:12px 14px;background:var(--bg-card);
+  border:1px solid var(--border-primary);border-radius:var(--radius-xl);
+  position:relative;overflow:hidden;
+  transition:var(--transition-fast),transform 0.4s cubic-bezier(0.16,1,0.3,1),
+    box-shadow 0.4s cubic-bezier(0.16,1,0.3,1);
+  box-shadow:var(--shadow-xs),var(--shadow-inset);
+  animation:card-in 0.35s ease backwards;
+}
+.card::after{
+  content:'';position:absolute;top:0;left:1px;right:1px;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.04),transparent);
+  border-radius:inherit inherit 0 0;pointer-events:none;
+}
+.card:hover{
+  border-color:var(--border-secondary);transform:translateY(-2px);
+  box-shadow:var(--shadow-md),var(--shadow-inset);
+}
+.card.dead{opacity:0.45}
+.card.dead:hover{opacity:0.65}
+@keyframes card-in{
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* Scan overlay per card */
+.card-scan{
+  position:absolute;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--accent-glow),transparent);
+  pointer-events:none;animation:scan 5s linear infinite;z-index:0;opacity:0.3;
+}
+@keyframes scan{
+  0%{top:-1px}
+  100%{top:100%}
+}
+
+.card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;position:relative;z-index:1}
+.card-id{
+  font-family:var(--font-mono);font-size:0.63rem;font-weight:600;
+  padding:2px 7px;border-radius:3px;
+  background:var(--accent-subtle);border:1px solid var(--accent-glow);
+  color:var(--accent-primary);
+}
+.card-id.dead{background:var(--danger-bg);border-color:var(--danger-border);color:var(--danger)}
+.card-status{display:flex;align-items:center;gap:4px;font-size:0.66rem;color:var(--text-secondary);position:relative;z-index:1}
+.card-status .dot{width:5px;height:5px;border-radius:50%}
+.dot-card-alive{background:var(--success);box-shadow:0 0 6px var(--accent-primary)}
+.dot-card-dead{background:var(--danger);box-shadow:0 0 6px var(--danger)}
+
+.card-proxy{
+  font-family:var(--font-mono);font-size:0.68rem;
+  padding:4px 7px;margin-bottom:6px;
+  background:var(--bg-tertiary);border-radius:3px;
+  border:1px solid var(--border-subtle);
+  color:var(--accent-primary);word-break:break-all;
+  display:flex;align-items:center;justify-content:space-between;gap:5px;
+  position:relative;z-index:1;
+}
+.card-proxy .proxy-copy{
+  font-size:0.58rem;cursor:pointer;padding:1px 4px;border-radius:2px;
+  border:none;background:var(--bg-hover);color:var(--text-dim);
+  transition:var(--transition-fast);flex-shrink:0;
+}
+.card-proxy .proxy-copy:hover{background:var(--bg-elevated);color:var(--text-secondary)}
+
+.card-stats{
+  display:grid;grid-template-columns:1fr 1fr;gap:2px 10px;font-size:0.68rem;
+  margin-bottom:4px;position:relative;z-index:1;
+}
+.card-stat-row{display:flex;justify-content:space-between;align-items:center;padding:1px 0}
+.card-stat-label{color:var(--text-muted)}
+.card-stat-value{font-family:var(--font-mono);color:var(--text-secondary)}
+.card-stat-value.accent{color:var(--accent-primary)}
+.card-stat-value.danger{color:var(--danger)}
+.card-stat-value.info{color:var(--info)}
+
+.card-error{
+  font-size:0.6rem;color:var(--danger);
+  background:var(--danger-bg);border:1px solid var(--danger-border);
+  padding:3px 7px;border-radius:3px;margin-bottom:4px;
+  word-break:break-all;position:relative;z-index:1;
+}
+
+.card-actions{
+  display:flex;gap:4px;margin-top:4px;
+  padding-top:6px;border-top:1px solid var(--border-subtle);
+  position:relative;z-index:1;
+}
+
+/* ─── Data pulse wave effect on cards ───────────── */
+@keyframes data-pulse{
+  0%{box-shadow:inset 0 0 0 0px var(--accent-glow)}
+  50%{box-shadow:inset 0 0 20px 4px var(--accent-glow)}
+  100%{box-shadow:inset 0 0 0 0px var(--accent-glow)}
+}
+.card.pulse{animation:data-pulse 1s cubic-bezier(0.16,1,0.3,1)}
+
+/* ─── Empty / Loading ───────────────────────────── */
+.empty-state{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:60px 20px;color:var(--text-dim);text-align:center;gap:10px;
+}
+.empty-state .icon{font-size:2.2rem;opacity:0.4}
+.empty-state .msg{font-size:0.85rem;color:var(--text-secondary)}
+.empty-state .sub{font-size:0.72rem}
+.spinner{width:20px;height:20px;border:2px solid var(--border-primary);border-top-color:var(--accent-primary);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ─── Toast ──────────────────────────────────────── */
+.toast-container{
+  position:fixed;bottom:20px;right:20px;z-index:100;
+  display:flex;flex-direction:column;gap:6px;pointer-events:none;
+}
+.toast{
+  padding:8px 14px;border-radius:var(--radius-md);
+  font-size:0.76rem;animation:toast-in 0.25s ease;pointer-events:auto;
+  border:1px solid var(--border-primary);backdrop-filter:blur(16px);
+}
+.toast.success{background:var(--success-bg);color:var(--success);border-color:var(--success-border)}
+.toast.error{background:var(--danger-bg);color:var(--danger);border-color:var(--danger-border)}
+.toast.info{background:var(--accent-subtle);color:var(--accent-primary);border-color:var(--accent-glow)}
+@keyframes toast-in{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}
+
+/* ─── Copy toast popup ──────────────────────────── */
+.copy-toast{
+  position:fixed;background:var(--bg-elevated);color:var(--success);
+  padding:3px 8px;border-radius:3px;font-size:0.62rem;
+  border:1px solid var(--success-border);pointer-events:none;
+  animation:copy-pop 0.8s ease forwards;z-index:200;
+}
+@keyframes copy-pop{
+  0%{opacity:1;transform:translateY(0)}
+  100%{opacity:0;transform:translateY(-16px)}
+}
+
+/* ─── Responsive ────────────────────────────────── */
+@media(max-width:768px){
+  .app{padding:10px}
+  .header{flex-direction:column;align-items:stretch}
+  .header-right .btn{flex:1;justify-content:center}
+  .stats-bar{grid-template-columns:repeat(2,1fr)}
+  .grid{grid-template-columns:1fr}
+  .stat-value{font-size:1rem}
+  .controls{flex-direction:column}
+  .search-box{min-width:100%}
+}
+
+/* ─── Reduced motion ────────────────────────────── */
+@media(prefers-reduced-motion:reduce){
+  .bg-glow::before,.bg-glow::after,.orb,.stat-value.breathe,.card-scan,
+  .card{animation:none!important;transition:none!important}
+  .stat-card .scan-line{display:none}
+  .toast{animation:none}
+  .card.pulse{animation:none}
 }
 </style>
 </head>
@@ -339,6 +420,9 @@ body {
 
 <div class="bg-grid"></div>
 <div class="bg-glow"></div>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
 
 <div class="app" id="app">
   <!-- Header -->
@@ -354,40 +438,44 @@ body {
         <span class="dot connecting" id="statusDot"></span>
         <span id="statusText">Connecting</span>
       </span>
-      <button class="btn btn-primary" onclick="copyAllProxies()" title="Copy all SOCKS5 proxy URLs">📋 Copy All Proxies</button>
+      <button class="btn btn-primary" onclick="copyAllProxies()" title="Copy all SOCKS5 proxy URLs">📋 Copy All</button>
       <button class="btn" onclick="rotateAll()" title="Request new Tor circuits for all instances">🔄 Rotate All</button>
     </div>
   </header>
 
   <!-- Stats Bar -->
   <div class="stats-bar" id="statsBar">
-    <div class="stat-card">
+    <div class="stat-card" style="--idx:0">
+      <div class="scan-line"></div>
       <div class="stat-label">Alive / Total</div>
-      <div class="stat-value cyan" id="statAlive">—<span class="stat-sub" style="font-size:0.65rem;color:var(--text-muted);font-weight:400;margin-left:4px" id="statDead"></span></div>
+      <div class="stat-value breathe accent" id="statAlive">—</div>
       <div class="stat-sub" id="statDeadDetail"></div>
     </div>
-    <div class="stat-card">
-      <div class="stat-label">Bandwidth (In / Out)</div>
-      <div class="stat-value green small" id="statBwIn">0 B/s <span class="stat-sub" style="color:var(--accent-rose)" id="statBwOut">0 B/s</span></div>
-      <div class="stat-sub" id="statTransfer">0 GB transferred</div>
+    <div class="stat-card" style="--idx:1">
+      <div class="scan-line"></div>
+      <div class="stat-label">Bandwidth</div>
+      <div class="stat-value breathe info" id="statBwIn">0 B/s</div>
+      <div class="stat-sub" id="statBwOut">0 B/s out</div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card" style="--idx:2">
+      <div class="scan-line"></div>
       <div class="stat-label">Circuits</div>
-      <div class="stat-value purple" id="statCircuits">0</div>
-      <div class="stat-sub">across all instances</div>
+      <div class="stat-value breathe warning" id="statCircuits">0</div>
+      <div class="stat-sub">across all Tor exits</div>
     </div>
-    <div class="stat-card">
-      <div class="stat-label">Uptime (max)</div>
-      <div class="stat-value orange" id="statUptime">0s</div>
-      <div class="stat-sub" id="statUpSince">—</div>
+    <div class="stat-card" style="--idx:3">
+      <div class="scan-line"></div>
+      <div class="stat-label">Uptime</div>
+      <div class="stat-value breathe" id="statUptime">0s</div>
+      <div class="stat-sub" id="statTransfer">0 GB transferred</div>
     </div>
   </div>
 
-  <!-- Proxy List Bar -->
+  <!-- Proxy Bar -->
   <div class="proxy-bar">
-    <span class="proxy-bar-label">SOCKS5 Proxies</span>
+    <span class="proxy-bar-label">SOCKS5</span>
     <div class="proxy-bar-list" id="proxyList"></div>
-    <button class="btn btn-sm" onclick="copyAllProxies()">📋 Copy</button>
+    <button class="btn btn-sm" onclick="copyAllProxies()">📋</button>
   </div>
 
   <!-- Controls -->
@@ -396,21 +484,23 @@ body {
     <span class="filter-count" id="filterCount">0 / 0</span>
   </div>
 
-  <!-- Grid / Empty -->
+  <!-- Grid -->
   <div id="gridContainer"></div>
 </div>
 
-<!-- Toast Container -->
+<!-- Toast -->
 <div class="toast-container" id="toastContainer"></div>
 
 <script>
-// ─── State ────────────────────────────────────────────────
+// ─── State ────────────────────────────────────────
 let state = null;
 let ws = null;
 let reconnectDelay = 1;
 let reconnectTimer = null;
+let prevAlive = 0;
+let prevDead = 0;
 
-// ─── WebSocket ────────────────────────────────────────────
+// ─── WebSocket ────────────────────────────────────
 function connectWS() {
   const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
   ws = new WebSocket(`${proto}//${location.host}/ws`);
@@ -425,18 +515,28 @@ function connectWS() {
     try {
       const msg = JSON.parse(e.data);
       if (msg.type === 'state') {
+        const oldAgg = state ? state.aggregate : null;
+        const newAgg = msg.aggregate;
         state = msg;
         render(msg);
+        // Data pulse on state change
+        if (oldAgg && (oldAgg.alive !== newAgg.alive || oldAgg.dead !== newAgg.dead)) {
+          document.querySelectorAll('.card').forEach(c => {
+            c.classList.remove('pulse');
+            void c.offsetWidth;
+            c.classList.add('pulse');
+            setTimeout(() => c.classList.remove('pulse'), 1000);
+          });
+        }
       }
-    } catch(err) { /* ignore parse errors */ }
+    } catch(_) {}
   };
 
   ws.onclose = () => {
-    if (state) render(state); // keep last known state visible
+    if (state) render(state);
     setStatus('offline', 'Disconnected');
     scheduleReconnect();
   };
-
   ws.onerror = () => { ws.close(); };
 }
 
@@ -452,10 +552,8 @@ function scheduleReconnect() {
 }
 
 function setStatus(type, text) {
-  const dot = document.getElementById('statusDot');
-  const label = document.getElementById('statusText');
-  dot.className = 'dot ' + type;
-  label.textContent = text;
+  document.getElementById('statusDot').className = 'dot ' + type;
+  document.getElementById('statusText').textContent = text;
 }
 
 function esc(s) {
@@ -463,7 +561,7 @@ function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// ─── Formatting ──────────────────────────────────────────
+// ─── Formatting ────────────────────────────────────
 function fmtBW(b) {
   if (!b || b < 1) return '0 B/s';
   if (b < 1024) return b + ' B/s';
@@ -486,64 +584,70 @@ function fmtUptime(s) {
 }
 function fmtCountry(c) { return c ? c.toUpperCase() : '—'; }
 
-// ─── Render ──────────────────────────────────────────────
+// ─── Render ────────────────────────────────────────
 function render(msg) {
   const insts = msg.instances || [];
   const agg = msg.aggregate || {};
   const filter = (document.getElementById('searchBox').value || '').toLowerCase();
+  const now = Date.now();
 
   // Stats
-  document.getElementById('statAlive').innerHTML = `${agg.alive || 0} / ${agg.total || 0}<span style="font-size:0.65rem;color:var(--text-muted);font-weight:400;margin-left:4px">${agg.dead ? `(${agg.dead} dead)` : ''}</span>`;
-  document.getElementById('statDeadDetail').textContent = agg.dead ? `${agg.dead} instance${agg.dead !== 1 ? 's' : ''} offline` : 'All online';
-  document.getElementById('statBwIn').innerHTML = `${fmtBW(agg.total_bandwidth_in)} <span class="stat-sub" style="color:var(--accent-rose)">${fmtBW(agg.total_bandwidth_out)}</span>`;
-  document.getElementById('statBwOut').textContent = fmtBW(agg.total_bandwidth_out);
-  document.getElementById('statTransfer').textContent = `${fmtBytes(agg.total_read + agg.total_written)} transferred`;
+  const aliveEl = document.getElementById('statAlive');
+  aliveEl.innerHTML = `${agg.alive || 0} <span style="font-size:0.65rem;font-weight:400;color:var(--text-dim)">/ ${agg.total || 0}</span>`;
+  if (agg.dead) {
+    document.getElementById('statDeadDetail').textContent = `${agg.dead} offline`;
+    document.getElementById('statDeadDetail').style.color = 'var(--danger)';
+  } else {
+    document.getElementById('statDeadDetail').textContent = 'All online';
+    document.getElementById('statDeadDetail').style.color = 'var(--text-dim)';
+  }
+  document.getElementById('statBwIn').textContent = fmtBW(agg.total_bandwidth_in);
+  document.getElementById('statBwOut').textContent = fmtBW(agg.total_bandwidth_out) + ' out';
   document.getElementById('statCircuits').textContent = agg.total_circuits || 0;
   document.getElementById('statUptime').textContent = fmtUptime(agg.uptime);
+  document.getElementById('statTransfer').textContent = fmtBytes(agg.total_read + agg.total_written) + ' transferred';
 
-  // Proxy list bar
+  // Proxy bar
   const proxyListEl = document.getElementById('proxyList');
   proxyListEl.innerHTML = (agg.proxy_list || []).map((p, i) => {
     const alive = insts[i] && insts[i].alive;
-    return `<span class="proxy-tag ${alive ? '' : 'dead'}" onclick="copyProxy('${p}', this)" title="Click to copy">${esc(p)}</span>`;
+    return `<span class="proxy-tag ${alive ? '' : 'dead'}" onclick="copyProxy('${esc(p)}', this)" title="Click to copy">${esc(p)}</span>`;
   }).join('');
 
-  // Filter + render cards
+  // Filter
   let filtered = insts.filter(i => {
     if (!filter) return true;
-    const ip = (i.exit_ip || '').toLowerCase();
-    const proxy = (i.proxy || '').toLowerCase();
-    const status = i.alive ? 'alive' : 'dead';
-    const err = (i.error || '').toLowerCase();
-    const country = (i.exit_country || '').toLowerCase();
-    return proxy.includes(filter) || ip.includes(filter) || status.includes(filter) || err.includes(filter) || country.includes(filter);
+    return (i.exit_ip||'').toLowerCase().includes(filter)
+      || (i.proxy||'').toLowerCase().includes(filter)
+      || (i.alive ? 'alive' : 'dead').includes(filter)
+      || (i.error||'').toLowerCase().includes(filter)
+      || (i.exit_country||'').toLowerCase().includes(filter)
+      || String(i.socks_port).includes(filter);
   });
   document.getElementById('filterCount').textContent = `${filtered.length} / ${insts.length}`;
 
   const container = document.getElementById('gridContainer');
 
   if (insts.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="spinner"></div><div class="msg">Booting Tor instances…</div><div class="sub">First connections take 30-60s</div></div>`;
+    container.innerHTML = `<div class="empty-state"><div class="spinner"></div><div class="msg">Booting Tor instances…</div><div class="sub">New circuits take 30–60s</div></div>`;
     return;
   }
 
-  container.innerHTML = `<div class="grid">${filtered.map((inst, idx) => renderCard(inst, idx)).join('')}</div>`;
+  container.innerHTML = `<div class="grid">${filtered.map((inst, i) => renderCard(inst, i)).join('')}</div>`;
 }
 
 function renderCard(inst, idx) {
   const alive = inst.alive;
-  const cls = alive ? '' : 'dead';
-  const style = `animation-delay: ${(idx % 20) * 0.025}s`;
   const statusCls = alive ? 'alive' : 'dead';
+  const style = `animation-delay:${(idx % 20) * 0.03}s`;
 
-  return `
-  <div class="card ${cls}" style="${style}">
-    <div class="scan-line"></div>
+  return `<div class="card ${alive ? '' : 'dead'}" style="${style}">
+    <div class="card-scan"></div>
     <div class="card-top">
-      <span class="card-id ${cls}">T${String(inst.id).padStart(2, '0')}</span>
+      <span class="card-id ${alive ? '' : 'dead'}">T${String(inst.id).padStart(2,'0')}</span>
       <span class="card-status">
-        <span class="dot ${statusCls}"></span>
-        ${alive ? 'Alive' : (inst.error ? 'Error' : 'Dead')}
+        <span class="dot dot-card-${statusCls}"></span>
+        ${alive ? 'Alive' : (inst.error ? 'Error' : 'Offline')}
       </span>
     </div>
     <div class="card-proxy">
@@ -551,14 +655,14 @@ function renderCard(inst, idx) {
       <button class="proxy-copy" onclick="copyProxy('${esc(inst.proxy)}', this)" title="Copy proxy URL">📋</button>
     </div>
     <div class="card-stats">
-      <div class="card-stat-row"><span class="card-stat-label">Exit IP</span><span class="card-stat-value purple">${inst.exit_ip ? esc(inst.exit_ip) : '⏳'}</span></div>
+      <div class="card-stat-row"><span class="card-stat-label">Exit IP</span><span class="card-stat-value accent">${inst.exit_ip ? esc(inst.exit_ip) : '⏳'}</span></div>
       <div class="card-stat-row"><span class="card-stat-label">Country</span><span class="card-stat-value">${fmtCountry(inst.exit_country)}</span></div>
-      <div class="card-stat-row"><span class="card-stat-label">BW In</span><span class="card-stat-value cyan">${fmtBW(inst.bandwidth_in)}</span></div>
-      <div class="card-stat-row"><span class="card-stat-label">BW Out</span><span class="card-stat-value rose">${fmtBW(inst.bandwidth_out)}</span></div>
+      <div class="card-stat-row"><span class="card-stat-label">BW In</span><span class="card-stat-value info">${fmtBW(inst.bandwidth_in)}</span></div>
+      <div class="card-stat-row"><span class="card-stat-label">BW Out</span><span class="card-stat-value danger">${fmtBW(inst.bandwidth_out)}</span></div>
       <div class="card-stat-row"><span class="card-stat-label">Circuits</span><span class="card-stat-value">${inst.circuit_count || 0}</span></div>
       <div class="card-stat-row"><span class="card-stat-label">Port</span><span class="card-stat-value">${inst.socks_port}</span></div>
-      <div class="card-stat-row"><span class="card-stat-label">Total Read</span><span class="card-stat-value">${fmtBytes(inst.total_read)}</span></div>
-      <div class="card-stat-row"><span class="card-stat-label">Total Written</span><span class="card-stat-value">${fmtBytes(inst.total_written)}</span></div>
+      <div class="card-stat-row"><span class="card-stat-label">Read</span><span class="card-stat-value">${fmtBytes(inst.total_read)}</span></div>
+      <div class="card-stat-row"><span class="card-stat-label">Written</span><span class="card-stat-value">${fmtBytes(inst.total_written)}</span></div>
       <div class="card-stat-row" style="grid-column:span 2"><span class="card-stat-label">Uptime</span><span class="card-stat-value">${fmtUptime(inst.uptime)}</span></div>
     </div>
     ${inst.error ? `<div class="card-error">${esc(inst.error)}</div>` : ''}
@@ -569,12 +673,10 @@ function renderCard(inst, idx) {
   </div>`;
 }
 
-// ─── Filter ───────────────────────────────────────────────
-function filterCards() {
-  if (state) render(state);
-}
+// ─── Filter ────────────────────────────────────────
+function filterCards() { if (state) render(state); }
 
-// ─── API ──────────────────────────────────────────────────
+// ─── API ────────────────────────────────────────────
 async function apiPost(path) {
   try {
     const r = await fetch(path, { method: 'POST' });
@@ -582,14 +684,14 @@ async function apiPost(path) {
     if (!r.ok) throw new Error(data.detail || `HTTP ${r.status}`);
     return data;
   } catch (e) {
-    toast('Request failed: ' + e.message, 'error');
+    toast(e.message, 'error');
     return null;
   }
 }
 
 async function rotateInstance(idx) {
   const r = await apiPost(`/api/instances/${idx}/new-identity`);
-  if (r) toast(`T${String(idx).padStart(2,'0')} — new circuit requested`, 'info');
+  if (r) toast(`T${String(idx).padStart(2,'0')} — new circuit`, 'info');
 }
 
 async function rotateAll() {
@@ -603,18 +705,17 @@ async function restartInstance(idx) {
   else toast(`Restart failed for T${String(idx).padStart(2,'0')}`, 'error');
 }
 
-// ─── Clipboard ────────────────────────────────────────────
+// ─── Clipboard ──────────────────────────────────────
 function copyProxy(text, el) {
   navigator.clipboard.writeText(text).then(() => {
-    // Quick popup
     const tip = document.createElement('div');
     tip.className = 'copy-toast';
     tip.textContent = 'Copied!';
-    const rect = el.getBoundingClientRect();
-    tip.style.left = rect.left + 'px';
-    tip.style.top = (rect.top - 24) + 'px';
+    tip.style.left = '50%';
+    tip.style.top = '40%';
+    tip.style.transform = 'translateX(-50%)';
     document.body.appendChild(tip);
-    setTimeout(() => tip.remove(), 1000);
+    setTimeout(() => tip.remove(), 800);
     toast('Proxy copied', 'success');
   });
 }
@@ -624,13 +725,12 @@ function copyAllProxies() {
     toast('No proxies available', 'error');
     return;
   }
-  const text = state.aggregate.proxy_list.join('\n');
-  navigator.clipboard.writeText(text).then(() => {
+  navigator.clipboard.writeText(state.aggregate.proxy_list.join('\n')).then(() => {
     toast(`All ${state.aggregate.proxy_list.length} proxies copied`, 'success');
   });
 }
 
-// ─── Toast ────────────────────────────────────────────────
+// ─── Toast ──────────────────────────────────────────
 function toast(msg, type) {
   const c = document.getElementById('toastContainer');
   const el = document.createElement('div');
@@ -640,7 +740,7 @@ function toast(msg, type) {
   setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.3s'; setTimeout(() => el.remove(), 300); }, 3000);
 }
 
-// ─── Init ─────────────────────────────────────────────────
+// ─── Init ───────────────────────────────────────────
 connectWS();
 </script>
 </body>
